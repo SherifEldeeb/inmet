@@ -72,7 +72,7 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, BYTE** buffer)
 	return ((DWORD)size + 5); 
 }
 
-int PatchString(BYTE* buffer, const char* replacement, const int index, const int NoOfBytes)
+int PatchString(BYTE* buffer, const wchar_t* replacement, const int index, const int NoOfBytes)
 {
 	int counter = 0;
 	for(int i = index; i < (index + NoOfBytes); i++)
