@@ -52,5 +52,3 @@ SOCKET get_socket(char* IP, char* iPort)  // MSDN http://msdn.microsoft.com/en-u
 	}
 	return ConnectSocket;
 }
-
-

@@ -113,3 +113,9 @@ bool AnsiToUnicode(const char* ascii, wchar_t* unicode)
 	else return FALSE;
 }
 
+bool UnicodeToAnsi(char* ascii, const wchar_t* unicode)
+{
+	int result = WideCharToMultiByte(CP_OEMCP, 0, unicode, -1, ascii, 17, 0, 0);
+	//int result = MultiByteToWideChar(CP_OEMCP, 0, ascii, -1, unicode, len + 1);
+	return TRUE;
+}

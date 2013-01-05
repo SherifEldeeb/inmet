@@ -82,11 +82,16 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="functions.cpp" />
+    <ClCompile Include="ResourceFunctions.cpp" />
     <ClCompile Include="winsock_functions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Constants.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="inmet.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

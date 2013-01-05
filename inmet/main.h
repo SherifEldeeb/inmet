@@ -37,5 +37,6 @@ int PatchString(BYTE* buffer, const char* cOriginal, const int index, const int 
 bool AnsiToUnicode(const char* ascii, wchar_t* unicode);								// Sorry for the insist on unicode support, I'm from Egypt :)
 DWORD binstrstr (BYTE * buff1, int lenbuff1, BYTE * buff2, int lenbuff2);				// Binary search, return offset, or 0 if not found/error...
 
-SOCKET get_socket(char* IP, char* iPort);
+SOCKET get_socket(char* IP, char* iPort); // get a socket from an IP and PORT
 
+DWORD ResourceToBuffer(WORD wResourceID, LPCTSTR lpType, unsigned char** buffer);

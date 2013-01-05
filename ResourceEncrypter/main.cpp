@@ -213,12 +213,11 @@ int wmain(int argc, wchar_t *argv[])
 
 	CopyBufferToFile(out_filename, buffer, filesize);
 
+	// combining both buffers...
 	big_buffer = (unsigned char*)VirtualAlloc(0, (strlen(encryption_key)+filesize+1), MEM_COMMIT, PAGE_READWRITE);
 	memcpy_s(big_buffer,strlen(encryption_key),encryption_key,strlen(encryption_key));
 	memcpy_s((big_buffer + strlen(encryption_key)),filesize , buffer,filesize);
-
-
-
+	
 	CopyBufferToFile(L"e:\\encrypted.rsc", big_buffer, filesize + strlen(encryption_key));
 
 	printf("%s\n",encryption_key);
