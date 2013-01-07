@@ -4,6 +4,11 @@ const char global_meterpreter_ua[] = "METERPRETER_UA\x00\x00\x00\x00\x00\x00\x00
 const int global_expiration_timeout = 0xb64be661; //big
 const int global_comm_timeout       = 0xaf79257f; // 300
 
+///"msf3/lib/msf/core/handler/reverse_http.rb"
+const int URI_CHECKSUM_INITW = 92;
+const int URI_CHECKSUM_INITJ = 88;
+const int URI_CHECKSUM_CONN  = 98;
+
 ///////////////////////////
 // ReflectiveDLL bootloader
 // Till I learn how to properly parse DLL files for RVAs and such at runtime, I hard coded the ReflectiveDll stub... sorry for that.

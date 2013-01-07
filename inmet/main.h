@@ -6,8 +6,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h> // Make *sure* windows.h gets included after everyting else ... redefinition hell...
-#include "Constants.h"
+#include <time.h>
 
+#include "Constants.h"
 #include "resource.h"
 
 // Payload types
@@ -40,10 +41,9 @@ int PatchString(BYTE* buffer, const wchar_t* cOriginal, const int index, const i
 bool AnsiToUnicode(const char* ascii, wchar_t* unicode);								// Sorry for the insist on unicode support, I'm from Egypt :)
 bool UnicodeToAnsi(char* ascii, const wchar_t* unicode);
 DWORD binstrstr (BYTE * buff1, int lenbuff1, BYTE * buff2, int lenbuff2);				// Binary search, return offset, or 0 if not found/error...
-
-SOCKET get_socket(wchar_t* IP, wchar_t* iPort); // get a socket from an IP and PORT
-
+SOCKET get_socket(wchar_t* IP, wchar_t* iPort);		// get a socket from an IP and PORT
 DWORD ResourceToBuffer(WORD wResourceID, LPCTSTR lpType, unsigned char** buffer);
-
 void XORcrypt(unsigned char *buffer, char *key, int size);
 void GetKeyFromBuffer(unsigned char* buffer, char* key, int size);
+void gen_random(char *s, const int len);
+int TextChecksum8(char* text);
