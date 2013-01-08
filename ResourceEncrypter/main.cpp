@@ -10,7 +10,7 @@ void gen_random(char *s, const int len) { //ripped & modified "added srand()" fr
 		"0123456789"
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		"abcdefghijklmnopqrstuvwxyz";
-	srand ( time(NULL) );
+	srand ( (UINT)time(NULL) );
 	for (int i = 0; i < len; ++i) {
 		s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
 	}

