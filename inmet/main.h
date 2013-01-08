@@ -41,4 +41,4 @@ void XORcrypt(unsigned char *buffer, char *key, int size);
 void GetKeyFromBuffer(unsigned char* buffer, char* key, int size);
 void gen_random(char *s, const int len);
 int TextChecksum8(char* text);
-void print_awesome_header();
+void print_header();

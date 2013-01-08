@@ -16,8 +16,8 @@ void gen_random(char *s, const int len) { //ripped & modified "added srand()" fr
 
 int TextChecksum8(char* text)
 {
-	int temp = 0;
-	for(int i = 0; i < strlen(text); i++)
+	UINT temp = 0;
+	for(UINT i = 0; i < strlen(text); i++)
 	{
 		temp += (int)text[i];
 	}

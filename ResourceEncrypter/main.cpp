@@ -188,7 +188,8 @@ int wmain(int argc, wchar_t *argv[])
 	{
 		wprintf(L"[*] Key provided as the third argument, using that to (de/en)crypt...\n");
 			wcscpy_s(temp,argv[2]);
-			UnicodeToAnsi(encryption_key,temp);
+			//UnicodeToAnsi(encryption_key,temp);
+			wcstombs(encryption_key,temp,wcslen(temp));
 	} else {
 		//Write key to file
 		wprintf(L"[*] No key specified, generating a random 16 character one...\n");

