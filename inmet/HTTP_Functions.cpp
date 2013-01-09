@@ -1,6 +1,11 @@
 //»”„ «··Â «·—Õ„‰ «·—ÕÌ„
 #include "main.h"
 
+void BuildURL(char *url, int checksum)
+{
+
+}
+
 void gen_random(char *s, const int len) { //ripped & modified "added srand()" from http://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 	static const char alphanum[] =
 		"0123456789"

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "inmet", "inmet\inmet.vcxproj", "{802281E0-D560-4A28-AB88-CF8B95ED9E3E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ultimet", "inmet\inmet.vcxproj", "{802281E0-D560-4A28-AB88-CF8B95ED9E3E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ResourceEncrypter", "ResourceEncrypter\ResourceEncrypter.vcxproj", "{39270343-D518-4A31-8AB8-C8DEBBF8E285}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ultimet_xor", "ResourceEncrypter\ResourceEncrypter.vcxproj", "{39270343-D518-4A31-8AB8-C8DEBBF8E285}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

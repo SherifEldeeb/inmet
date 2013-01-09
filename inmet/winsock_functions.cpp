@@ -13,10 +13,10 @@ SOCKET get_socket(wchar_t* IP, wchar_t* iPort)  // MSDN http://msdn.microsoft.co
 	char ansiIP[1024] = {0};
 	char ansiPort[128] = {0};
 
-	//UnicodeToAnsi(ansiIP,IP);
-	//UnicodeToAnsi(ansiPort,iPort);
-	wcstombs(ansiIP,IP,wcslen(IP));
-	wcstombs(ansiPort,iPort,wcslen(iPort));
+	UnicodeToAnsi(ansiIP,IP);//I do not know why this works for me without problems, but when using wcstombs instead, ultimet stops responding w/error after KILLING THE SESSION FROM THE HANDLER SIDE...
+	UnicodeToAnsi(ansiPort,iPort);
+	//wcstombs(ansiIP,IP,wcslen(IP));
+	//wcstombs(ansiPort,iPort,wcslen(iPort));
 
 	struct addrinfo *result = NULL;	// A pointer to a linked list of addrinfo structures that contains response information about the host.
 	struct addrinfo hints = {0};	// A pointer to an addrinfo structure that provides hints about the type of socket the caller supports. `getaddrinfo()`

@@ -14,6 +14,7 @@
     <ProjectGuid>{802281E0-D560-4A28-AB88-CF8B95ED9E3E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>inmet</RootNamespace>
+    <ProjectName>ultimet</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -98,9 +99,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="inmet.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

