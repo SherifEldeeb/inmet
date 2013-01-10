@@ -45,3 +45,6 @@ int TextChecksum8(char* text);
 void print_header();
 void usage();
 void BuildURL(char *url, int checksum8);
+
+
+int recv_all(SOCKET socket, unsigned char* buffer, int len);

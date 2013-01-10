@@ -16,10 +16,10 @@ DWORD ResourceToBuffer(WORD wResourceID, LPCTSTR lpType, unsigned char** buffer)
 	DWORD tempByteCount = 0;
 
 	hResInfo = FindResource(NULL, MAKEINTRESOURCE(wResourceID), lpType);
-	if (hResInfo == NULL) return -1;
+	if (hResInfo == NULL) return 0;
 
 	hRes = LoadResource(NULL, hResInfo);
-	if (hRes == NULL) return -1;
+	if (hRes == NULL) return 0;
 	
 	tempByteCount = SizeofResource(NULL,hResInfo); // Get the resource size in bytes
 	tempBuffer = LockResource(hRes); //pointer to the data
