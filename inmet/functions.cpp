@@ -139,8 +139,8 @@ void usage()
 
 		"\nMandatory switches:\n"
 		"\t-h\tLHOST\tIP or a hostname.\n"
-		"\t-p\tLPORT\tPort number, or corresponding service name \"like HTTP, FTP...etc.\"\n"
-		"\t-t\tTRANSPORT\tEither \"reverse_metsvc\", \"reverse_http\" or \"reverse_https\".\n"
+		"\t-p\tLPORT\tPort number.\"\n"
+		"\t-t\tTRANSPORT\t\"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\" or \"reverse_https\" .\n"
 
 		"\nHTTP(S) Specific parameters:\n"
 		"\t-ua\tU_AGENT\t User-Agent, enclose in `\"\"` if contains spaces.\n"
@@ -154,8 +154,10 @@ void usage()
 
 		"\n - If you're on a shell [not a console], you have to start the program using:\n"
 		"  \"start /b ultimet.exe ...\" or you'll lose your shell.\n"
-		"\n - For the reverse_metsvc option, the most reliable handler is:\n"
-		"  \"windows/metsvc_reverse_tcp\", \"reverse_tcp\" might work, but not always.\n"
+		"\n - For the reverse_metsvc option, stage has to be available upfront, either through the bundled resource\n"
+		"    or loaded usng the \"-f\" option; note that the most reliable handler for reverse_metsvc is:\n"
+		"  \"windows/metsvc_reverse_tcp\" ... using reverse_metsvc to connect to a \"reverse_tcp\" *might* work,\n"
+		"    but not always, so, use reverse_metsvc with windows/metsvc_reverse_tcp... ok?\n"
 
 		);
 }
