@@ -4,7 +4,7 @@
   ...your one stop shop for all your
               meterpreter executable needs...
 
-
+Usage, examples and faq http://eldeeb.net/wrdprs/?p=176
 ---------------
 1. Introduction
 ---------------
@@ -83,4 +83,6 @@ Made in Egypt.
 hdm, corelanc0d3r, mihi, egypt, kernelsmith, tillo.
 - Stephen Fewer for helping with ReflectiveDll stuff.
 - @lnxg33k, @anwarelmakrahy & Yehia Mamdouh: for testing and bug reporting.
+
+
 
