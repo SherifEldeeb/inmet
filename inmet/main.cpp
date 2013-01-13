@@ -1,4 +1,4 @@
-//»”г «ббе «б—Ќгд «б—Ќнг
+//пњљпњљпњљ пњљпњљпњљпњљ пњљпњљпњљпњљпњљпњљ пњљпњљпњљпњљпњљпњљ
 
 /************************************************
 *					  [ultimet]					*
@@ -68,7 +68,7 @@ int wmain(int argc, wchar_t *argv[])
 	for (int i = 1; i < argc; i++) 
 	{
 		if (i != argc) // Check that we haven't finished parsing already
-			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
+			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_tcp, reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
 				payload_settings.TRANSPORT = argv[i + 1];
 				_wcsupr(payload_settings.TRANSPORT); // Wide-String-to-uppercase
 				if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
@@ -89,7 +89,7 @@ int wmain(int argc, wchar_t *argv[])
 					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTPS";
 				}
 				else {
-					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_metsvc, reverse_http and reverse_https.\n", payload_settings.TRANSPORT);
+					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_metsvc, reverse_http and reverse_https.\n", payload_settings.TRANSPORT);
 					exit(0);
 				}
 				// End of Transport checks
