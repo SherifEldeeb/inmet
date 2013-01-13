@@ -8,7 +8,7 @@
 ---------------
 1. Introduction
 ---------------
-  1.a Stand-alone meterpreter executables that are created using (msfpayload/msfvenom) are not flexible in selecting the LHOST, LPORT or even the transport after being created ... i.e. once you create the exe, you cannot change any of the settings you specified during the creation of the executable.
+  1.a Stand-alone meterpreter executable that are created using (msfpayload/msfvenom) are not flexible in selecting the LHOST, LPORT or even the transport after being created ... i.e. once you create the exe, you cannot change any of the settings you specified during the creation of the executable.
 
   1.b Meterpreter by design is a "staged" payload, it consists of a "stager" and a "stage"; when msfpayload|msfvenom create an exe, that's the "stager" part of meterpreter, which has only one purpose: When executed, connect back to the exploit/multi/handler, make room for the stager, copy the "stage" from ha  - From an *encrypted* resource that is included in the exe itself (a tool is available `ultimet_xor.exe` to create the unique encrypted resource).
 ndler, then execute the "stage" ... that "stage" is nothing but a patched version of "metsrv.dll" that you find in metasploit directory ... this scenario presents a challenge in highly secure environments(!) where incoming files from the internet are checked for viruses `:)` ...  example: someone created a meterpreter/reverse_http exe using msfvenom, then he manages to bypass AV somehow and successfully executed this exe on one machine inside the target environment, if there's some kind of virus checking of downloaded files at the gateway/proxy level ... the "stage" gets flagged, not downloaded, not executed, and you're doomed.
