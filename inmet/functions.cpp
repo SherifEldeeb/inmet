@@ -127,10 +127,11 @@ void print_header()
 {
 	printf("\n\n****************************************************\n");
 	printf(" [+] [ultimet] - The Ultimate Meterpreter Executable\n");
-	printf(" [+] v0.1 pre-alpha\n");
+	printf(" [+] v0.2\n");
 	printf("****************************************************\n");
 	printf("  -  http://eldeeb.net - @SheriefEldeeb\n\n");
 }
+
 void usage()
 {
 	printf(
@@ -140,7 +141,7 @@ void usage()
 		"\nMandatory switches:\n"
 		"\t-h\tLHOST\tIP or a hostname.\n"
 		"\t-p\tLPORT\tPort number.\"\n"
-		"\t-t\tTRANSPORT\t\"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\", \"reverse_https\" ,\"bind_tcp\" or \"bind_metsvc\""
+		"\t-t\tTRANSPORT\t\"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\", \"reverse_https\", \"bind_tcp\" or \"bind_metsvc\""
 
 		"\nHTTP(S) Specific parameters:\n"
 		"\t-ua\tU_AGENT\t User-Agent, enclose in `\"\"` if contains spaces.\n"
@@ -162,6 +163,8 @@ void usage()
 		"\nand also for bind_metsvc:\n"
 		"  \"windows/metsvc_bind_tcp\" ... using bind_metsvc to connect to a \"bind_tcp\" *might* work,\n"
 		"  but not always, so, use bind_metsvc with windows/metsvc_metsvc_tcp...\n"
+		"\nContributors:\n"
+		" - Anwar Mohamed \"@anwarelmakrahy\" - Added support for metsvc_bind_tcp & bind_tcp.\n"
 
 		);
 }

