@@ -78,7 +78,13 @@ Made in Egypt.
 ... P.S: I am not a developer ;)
 
 -------------------
-10. Acknowledgments
+10. Contributors:
+-------------------
+- Anwar Mohamed "@anwarelmakrahy" http://spysharksecurity.blogspot.com/ 
+  Added support for metsvc_bind_tcp & bind_tcp.
+  
+-------------------
+11. Acknowledgments
 -------------------
 - All the extremely helpful people at #metasploit, and the mailing list:
 hdm, corelanc0d3r, mihi, egypt, kernelsmith, tillo.
