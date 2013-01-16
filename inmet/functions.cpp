@@ -80,7 +80,7 @@ int PatchString(unsigned char* buffer, const wchar_t* replacement, const int ind
 	int counter = 0;
 	for(int i = index; i < (index + NoOfBytes); i++)
 	{
-		buffer[i] = (UCHAR)replacement[counter];
+		buffer[i] = (u_char)replacement[counter];
 		counter++;
 	}
 	return 0;

