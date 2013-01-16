@@ -1,7 +1,7 @@
 //بسم الله الرحمن الرحيم
 /*
 	Contributors:
-	- Anwar Mohamed "@anwarelmakrahy" http://spysharksecurity.blogspot.com/
+	- Anwar Mohamed "@anwarelmakrahy"
 	  Added support for metsvc_bind_tcp & bind_tcp.
 
 	- YOUR NAME HERE...
