@@ -37,7 +37,10 @@ int PatchString(unsigned char* buffer, const wchar_t* cOriginal, const int index
 bool AnsiToUnicode(const char* ascii, wchar_t* unicode);								// Sorry for the insist on unicode support, I'm from Egypt :)
 bool UnicodeToAnsi(char* ascii, const wchar_t* unicode);
 DWORD binstrstr (unsigned char * buff1, int lenbuff1, unsigned char * buff2, int lenbuff2);				// Binary search, return offset, or 0 if not found/error...
+
 SOCKET get_socket(wchar_t* IP, wchar_t* iPort);		// get a socket from an IP and PORT
+SOCKET get_server_socket(wchar_t* IP, wchar_t* iPort);
+
 DWORD ResourceToBuffer(WORD wResourceID, LPCTSTR lpType, unsigned char** buffer);
 void XORcrypt(unsigned char *buffer, char *key, int size);
 void GetKeyFromBuffer(unsigned char* buffer, char* key, int size);
@@ -50,3 +53,5 @@ void BuildURL(char *url, int checksum8);
 
 void StagerRevereTCP(wchar_t* IP, wchar_t* iPort);
 void StagerReverseHTTP(wchar_t *IP, wchar_t *iPort, wchar_t *transport);
+
+void StagerBindTCP(wchar_t* IP, wchar_t* iPort);
