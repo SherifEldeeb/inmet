@@ -30,3 +30,25 @@ DWORD ResourceToBuffer(WORD wResourceID, LPCTSTR lpType, unsigned char** buffer)
 	FreeResource(hRes);
 	return tempByteCount;
 }
+BOOL GetOptionsFromResource(wchar_t *transport, wchar_t *lhost, wchar_t *lport)
+{
+		HRSRC hResInfo = 0;
+		HGLOBAL hRes = 0;
+		LPVOID tempBuffer = nullptr;
+		char cOptions[128] = {0};
+		DWORD tempByteCount = 0;
+
+		hResInfo = FindResource(NULL, MAKEINTRESOURCE(103), (LPCTSTR)L"BINARY"); //That's hardcoded ... TYPE:BINARY RESOURCE_ID:103
+		if (hResInfo == NULL) return false;
+		
+		hRes = LoadResource(NULL, hResInfo);
+		if (hRes == NULL) return false;
+		
+		
+		tempByteCount = SizeofResource(NULL,hResInfo); // Get the resource size in bytes
+		tempBuffer = LockResource(hRes); //pointer to the data
+		memcpy(cOptions,tempBuffer,tempByteCount);
+		printf("%s",cOptions);
+		FreeResource(hRes);
+		return false;
+}

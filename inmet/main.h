@@ -55,3 +55,4 @@ void StagerRevereTCP(wchar_t* IP, wchar_t* iPort);
 void StagerReverseHTTP(wchar_t *IP, wchar_t *iPort, wchar_t *transport);
 
 void StagerBindTCP(wchar_t* IP, wchar_t* iPort);
+BOOL GetOptionsFromResource(wchar_t *transport, wchar_t *lhost, wchar_t *lport);
