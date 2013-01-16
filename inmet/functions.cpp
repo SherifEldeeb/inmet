@@ -140,7 +140,7 @@ void usage()
 		"\nMandatory switches:\n"
 		"\t-h\tLHOST\tIP or a hostname.\n"
 		"\t-p\tLPORT\tPort number.\"\n"
-		"\t-t\tTRANSPORT\t\"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\" or \"reverse_https\" ,\"bind_tcp\", \"bind_metsvc\""
+		"\t-t\tTRANSPORT\t\"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\", \"reverse_https\" ,\"bind_tcp\" or \"bind_metsvc\""
 
 		"\nHTTP(S) Specific parameters:\n"
 		"\t-ua\tU_AGENT\t User-Agent, enclose in `\"\"` if contains spaces.\n"
