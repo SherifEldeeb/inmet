@@ -267,7 +267,10 @@ int wmain(int argc, wchar_t *argv[])
 
 		// Patching ReflectiveDLL bootstrap 
 		index = 0;  //rewind
-		dprintf(L"[*] Patching ReflectiveDll Bootstrap: \"MZ\" Offset 0x%08x\n", index);	
+		dprintf(L"[*] Patching ReflectiveDll Bootstrap: \"MZ\" Offset 0x%08x\n", index);
+
+		ReflectiveLoaderOffset((DWORD)buffer);
+
 		memcpy(buffer, ReflectiveDllBootStrap, 62);//overwrite dos header with the ReflectiveDll bootstrap
 
 		//////////////////////////////////////////
