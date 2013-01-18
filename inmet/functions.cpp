@@ -1,6 +1,19 @@
 #include "main.h"
 DWORD err = 0;
 
+BOOL IsThisAValidTransport(wchar_t *transport)
+{
+	_wcsupr(transport);
+	if(
+		(wcscmp(transport,L"REVERSE_TCP") == 0)		||
+		(wcscmp(transport,L"BIND_TCP") == 0)		||
+		(wcscmp(transport,L"REVERSE_HTTP") == 0)	||
+		(wcscmp(transport,L"REVERSE_HTTPS") == 0)	||
+		(wcscmp(transport,L"REVERSE_METSVC") == 0)	||
+		(wcscmp(transport,L"BIND_METSVC") == 0)
+		) return true;
+	return false;
+}
 
 
 LONGLONG SizeFromName(LPCWSTR szFileName) // Returns a file's size from its filename, returns a LONGLONG, in case you have a LARGE LARGE file :)
@@ -13,7 +26,7 @@ LONGLONG SizeFromName(LPCWSTR szFileName) // Returns a file's size from its file
 		err = GetLastError();
 		dprintf(L"[-] Invalid file handle! CreateFile() returned : %08x\n", err);
 		CloseHandle(hfile);
-		exit(0);
+		exit(1);
 	}
 
 	if(!GetFileSizeEx(hfile,&fileSize)) // Get the size from the file handle
@@ -21,7 +34,7 @@ LONGLONG SizeFromName(LPCWSTR szFileName) // Returns a file's size from its file
 		err = GetLastError();
 		dprintf(L"[-] Error getting file size! GetFileSizeEx() returned : %08x\n", err);
 		CloseHandle(hfile);
-		exit(0);
+		exit(1);
 	}
 
 	CloseHandle(hfile); // this will ALWAYS throw an exception if run under a debugger, but good higene if run under "production"
@@ -36,7 +49,7 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, unsigned char** buffer)
 	if (size == -1)
 	{
 		dprintf(L"[-] Something went wrong getting size of file: \"%s\".\n", szFileName);
-		exit(0);
+		exit(1);
 	}
 	else {
 		dprintf(L"[*] Size of \"%s\" is \"%d\" bytes.\n", szFileName, size);
@@ -61,7 +74,7 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, unsigned char** buffer)
 		err = GetLastError();
 		dprintf(L"[-] Invalid file handle! CreateFile() returned : %08x\n", err);
 		CloseHandle(hfile);
-		exit(0);
+		exit(1);
 	}
 
 	dprintf(L"[*] Copying file \"%s\" to buffer...\n", szFileName);
@@ -69,7 +82,7 @@ DWORD CopyStageToBuffer(LPCWSTR szFileName, unsigned char** buffer)
 	{
 		printf("[-] Unable to read from file.\n");
 		CloseHandle(hfile);
-		exit(0);
+		exit(1);
 	}
 	// We add 5 bytes to leave room for 0xBF+SOCKET_NUMBER
 	return (DWORD)size; 
