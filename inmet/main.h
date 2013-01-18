@@ -8,7 +8,7 @@
 #include <windows.h> // Make *sure* windows.h gets included after everyting else ... redefinition hell...
 #include <time.h>
 #include <Wininet.h>
-
+#include <intrin.h>
 #include "Constants.h"
 #include "resource.h"
 
