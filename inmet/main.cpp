@@ -271,7 +271,7 @@ int wmain(int argc, wchar_t *argv[])
 			FallbackToStager = true; // We will function in "stager" mode.
 			if(metsvc) // Ok, we will fallback to stager mode, however, metsvc will not be available in stager mode ... right?
 			{
-				dprintf(L"\n[-] Unable to load stage from resource, and \"-f\" not specified ... yet you've chosen %s!\n",payload_settings.TRANSPORT);
+				dprintf(L"\n[-] Unable to load stage from resource, and \"-f\" not specified ... yet you've chosen metsvc!\n");
 				dprintf(L"    sorry sweetheart, that's not going to work, metsvc *requires* that the stage is available upfront.\n");
 				dprintf(L"[-] ... will exit.\n");
 				exit(1);

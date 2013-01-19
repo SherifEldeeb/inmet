@@ -148,7 +148,7 @@ void print_header()
 {
 	printf("****************************************************\n");
 	printf("[+] [ultimet] - The Ultimate Meterpreter Executable\n");
-	printf("[+] v0.3 - #25Jan Revolution  \n");
+	printf("[+] v0.25.1 - Revolution  \n");
 	printf("****************************************************\n");
 	printf("  -  http://eldeeb.net - @SheriefEldeeb\n\n");
 }
