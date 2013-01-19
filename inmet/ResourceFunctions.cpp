@@ -197,7 +197,7 @@ void RemoveStage(void)
 		if (UpdateResourceW(hResource, (LPCTSTR)L"BINARY", MAKEINTRESOURCE(101), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), NULL, NULL) != FALSE)
 		{
 			EndUpdateResource(hResource, FALSE);
-			dprintf(L"[*] `ultimet_lite.exe` created without stage\n");
+			dprintf(L"[*] `ultimet_no_stage.exe` created without stage\n");
 		}
 		else
 		{

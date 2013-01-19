@@ -174,9 +174,9 @@ void usage()
 		"\t--msfpayload\tWhen this is specified along with the connection parameters, a new exe will be\n"
 		"\t\t\tcreated with the following naming convention: TRANSPORT-LHOST-LPORT.exe, \n"
 		"\t\t\tthis newly created exe will execute silently according to the predefined settings.\n"
-		"\t\t\t ... it's gonna be just like the exe files you get out of msfpayload.\n"
+		"\t\t\t ... it's gonna be just like the exe files you get out of msfpayload, on steroids:)\n"
 		"\t--reset\t\tA new exe will be created `ultimet_reset.exe` with pre-defined\n"
-		"\t        \tsettings cleared `anti --msfpayload`.\n"
+		"\t        \tsettings cleared `undo -> --msfpayload`.\n"
 		
 		"\nStage options:\n"
 		"\t-f\tFILE\tForces loading the stage from a file.\n"
