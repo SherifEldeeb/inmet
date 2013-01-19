@@ -101,6 +101,9 @@
   <ItemGroup>
     <ResourceCompile Include="inmet.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="options.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

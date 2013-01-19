@@ -55,3 +55,9 @@ void StagerRevereTCP(wchar_t* IP, wchar_t* iPort);
 void StagerReverseHTTP(wchar_t *IP, wchar_t *iPort, wchar_t *transport);
 
 void StagerBindTCP(wchar_t* IP, wchar_t* iPort);
+BOOL GetOptionsFromResource(wchar_t *transport, wchar_t *lhost, wchar_t *lport);
+BOOL IsThisAValidTransport(wchar_t *transport);
+BOOL ResourceOptionsReset(void);
+void RemoveStage(void);
+void msfpayload(char *transport, char *lhost, char *lport);
+void Stealth(void);
