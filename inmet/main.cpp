@@ -251,6 +251,7 @@ int wmain(int argc, wchar_t *argv[])
 	if(payload_settings.TRANSPORT == NULL || payload_settings.LPORT == NULL || payload_settings.LHOST == NULL)
 	{
 		dprintf(L"[-] Not enough parameters! \n\n");
+		print_header();
 		usage();
 		exit(1);
 	}
@@ -272,16 +273,11 @@ int wmain(int argc, wchar_t *argv[])
 			{
 				dprintf(L"\n[-] Unable to load stage from resource, and \"-f\" not specified ... yet you've chosen %s!\n",payload_settings.TRANSPORT);
 				dprintf(L"    sorry sweetheart, that's not going to work, metsvc *requires* that the stage is available upfront.\n");
-				dprintf(L"[-] Use inmet.exe, use \"reverse_tcp\" or \"bind_tcp\", use another transport, or bundle this exe with metsvc.dll.\n"
-						L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
-						L" -  You can also load the stage from file system by using \"-f\" switch.\n");
 				dprintf(L"[-] ... will exit.\n");
 				exit(1);
 			} else
 			{
-				dprintf(L"[!] Couldn't read stage from resource & \"-f\" not speified; falling back to \"stager\" mode...\n"
-						L" -  To bundle the stage into this exe: import metsrv.dll as a resource, call it \"BINARY\" and ID it \"101\".\n"
-						L" -  You can also load the stage from file system by using \"-f\" switch.\n");
+				dprintf(L"[!] Couldn't read stage from resource & \"-f\" not speified; falling back to \"stager\" mode...\n");
 			}
 		}
 	}
