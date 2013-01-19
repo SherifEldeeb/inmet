@@ -1,6 +1,14 @@
 #include "main.h"
 DWORD err = 0;
 
+void Stealth()
+{
+	HWND stealth;
+	AllocConsole();
+	stealth = FindWindow(L"ConsoleWindowClass", NULL);
+	ShowWindow(stealth,0);     
+}
+
 BOOL IsThisAValidTransport(wchar_t *transport)
 {
 	_wcsupr(transport);

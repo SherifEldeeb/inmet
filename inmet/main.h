@@ -59,3 +59,5 @@ BOOL GetOptionsFromResource(wchar_t *transport, wchar_t *lhost, wchar_t *lport);
 BOOL IsThisAValidTransport(wchar_t *transport);
 BOOL ResourceOptionsReset(void);
 void RemoveStage(void);
+void msfpayload(char *transport, char *lhost, char *lport);
+void Stealth(void);

