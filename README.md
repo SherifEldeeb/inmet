@@ -23,8 +23,7 @@ Usage, examples and faq http://eldeeb.net/wrdprs/?p=176
 ------------------------------------------------
 3. What are the supported transports (payloads)? 
 ------------------------------------------------
-- It supports "reverse_tcp", "reverse_http", "reverse_https" and "reverse_metsvc <- when stage included". 
-- meterpreter/bind_tcp and metsvc_bind_tcp are to be added soon, god willing, since it will require very little code additions to what is already there.
+- It supports "reverse_tcp", "bind_tcp", "reverse_http", "reverse_https" and "bint_metsvc & reverse_metsvc <- when stage included". 
 
 ---------------------------------------
 4. How exactly is the stage "included"? 
