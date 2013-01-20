@@ -227,4 +227,69 @@ void usage()
 		"     Bootstrap.\n"
 
 		);
+};
+
+DWORD ReflectiveLoaderOffset(DWORD BaseAddress){
+
+	PIMAGE_DOS_HEADER pDosHeader;
+	PIMAGE_NT_HEADERS pImageHeader;
+	PIMAGE_EXPORT_DIRECTORY PExportDirectory;
+
+	DWORD RDLLAddress;
+
+    pDosHeader = (PIMAGE_DOS_HEADER)BaseAddress;
+    pImageHeader = (PIMAGE_NT_HEADERS)(BaseAddress + pDosHeader->e_lfanew);
+
+	DWORD ExportRVA = pImageHeader->OptionalHeader.DataDirectory[0].VirtualAddress;
+	PExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(RVAToOffset(pImageHeader,ExportRVA)+BaseAddress);
+
+	PDWORD ExportFunctions = (PDWORD)(RVAToOffset(pImageHeader, PExportDirectory->AddressOfFunctions) + BaseAddress); 
+	PDWORD ExportNames = (PDWORD)(RVAToOffset(pImageHeader, PExportDirectory->AddressOfNames) + BaseAddress);
+	PWORD ExportOrdinals = (PWORD)(RVAToOffset(pImageHeader, PExportDirectory->AddressOfNameOrdinals) + BaseAddress);
+
+	char *check = nullptr;
+	char *tempPointer = nullptr;
+	bool gotcha = false;
+	DWORD address = 0;
+	for (DWORD i =0; i<PExportDirectory->NumberOfFunctions; i++) {
+		//std::cout << (char*)(DWORD*)RVAToOffset(pImageHeader,ExportNames[i]) + BaseAddress << std::endl;
+		//std::cout << (PDWORD)RVAToOffset(pImageHeader,ExportFunctions[ExportOrdinals[i]]) + BaseAddress << std::endl;
+		check = ((char*)(DWORD*)RVAToOffset(pImageHeader,ExportNames[i]) + BaseAddress);
+		tempPointer = strstr(check,"ReflectiveLoader");
+		if(tempPointer != nullptr && check != nullptr)
+		{
+			gotcha = true;
+			address = (DWORD)RVAToOffset(pImageHeader,ExportFunctions[ExportOrdinals[i]]);
+			break;
+		}
+
+    } 
+	if (gotcha) 
+	{
+		dprintf(L"[*] ReflectiveDll function offset found: 0x%08x\n", address);
+		return address;
+	}
+	else return 0x153e; //hardcoded ... we have not tested these functions thoroughly yet.
+};
+
+
+DWORD RVAToOffset(IMAGE_NT_HEADERS32 * pNtHdr, DWORD dwRVA)
+{
+	int i;
+    WORD wSections;
+    PIMAGE_SECTION_HEADER pSectionHdr;
+    pSectionHdr = IMAGE_FIRST_SECTION(pNtHdr);
+    wSections = pNtHdr->FileHeader.NumberOfSections;
+    for (i = 0; i < wSections; i++)
+    {
+		if (pSectionHdr->VirtualAddress <= dwRVA)
+			if ((pSectionHdr->VirtualAddress + pSectionHdr->Misc.VirtualSize) > dwRVA)
+            {
+                dwRVA -= pSectionHdr->VirtualAddress;
+                dwRVA += pSectionHdr->PointerToRawData;
+				return (dwRVA);
+            }
+        pSectionHdr++;
+    }
+    return 0;
 }
