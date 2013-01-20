@@ -3,6 +3,7 @@
 	Contributors:
 	- Anwar Mohamed "@anwarelmakrahy"
 	  Added support for metsvc_bind_tcp & bind_tcp.
+	  Added support for run-time parsing and patching of ReflectiveLoader Bootstrap.
 
 	- YOUR NAME HERE...
 */
