@@ -146,7 +146,7 @@ bool UnicodeToAnsi(char* ascii, const wchar_t* unicode)
 
 void print_header()
 {
-	printf("****************************************************\n");
+	printf("\n****************************************************\n");
 	printf("[+] [ultimet] - The Ultimate Meterpreter Executable\n");
 	printf("[+] v0.25.1 - Revolution  \n");
 	printf("****************************************************\n");
@@ -235,7 +235,7 @@ DWORD ReflectiveLoaderOffset(DWORD BaseAddress){
 	PIMAGE_NT_HEADERS pImageHeader;
 	PIMAGE_EXPORT_DIRECTORY PExportDirectory;
 
-	DWORD RDLLAddress;
+	//DWORD RDLLAddress;
 
     pDosHeader = (PIMAGE_DOS_HEADER)BaseAddress;
     pImageHeader = (PIMAGE_NT_HEADERS)(BaseAddress + pDosHeader->e_lfanew);
@@ -269,7 +269,7 @@ DWORD ReflectiveLoaderOffset(DWORD BaseAddress){
 		dprintf(L"[*] ReflectiveDll function offset found: 0x%08x\n", address);
 		return address;
 	}
-	else return 0x153e; //hardcoded ... we have not tested these functions thoroughly yet.
+	else return 0x153e; //hardcoded from original metsrv.dll... we have not tested these functions thoroughly yet.
 };
 
 
