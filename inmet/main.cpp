@@ -138,7 +138,7 @@ int wmain(int argc, wchar_t *argv[])
 			if (i != argc) // Check that we haven't finished parsing already
 				if (wcscmp(argv[i], L"-t") == 0) { //Transport; available options are reverse_tcp, reverse_metsvc, REVERSE_HTTP, REVERSE_HTTPS ... case doesn't matter.
 					payload_settings.TRANSPORT = argv[i + 1];
-					_wcsupr_s(payload_settings.TRANSPORT, wcslen(payload_settings.TRANSPORT) *  sizeof(wchar_t));  // Wide-String-to-uppercase
+					_wcsupr_s(payload_settings.TRANSPORT, wcslen(payload_settings.TRANSPORT) +1);  // Wide-String-to-uppercase
 					wcscpy_s(UNICODEtransport_2,payload_settings.TRANSPORT); //we will use UNICODEtransport_2 if we've been asked to do msfpayload
 					if(wcscmp(payload_settings.TRANSPORT,L"REVERSE_TCP") == 0) 
 					{
