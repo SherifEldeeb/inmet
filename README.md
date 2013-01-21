@@ -120,6 +120,7 @@ Made in Egypt.
 -------------------
 - Anwar Mohamed "@anwarelmakrahy"
   Added support for metsvc_bind_tcp & bind_tcp.
+  Added support for run-time parsing for ReflectiveLoader function RVA & locate file offset.
   
 -------------------
 11. Acknowledgments
