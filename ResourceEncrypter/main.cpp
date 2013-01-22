@@ -42,7 +42,7 @@ either expressed or implied, of the FreeBSD Project.
 #include <time.h>
 
 DWORD err = 0;
-
+DWORD bytesWritten = 0;
 void print_header()
 {
 	printf("\n\n****************************************************\n");
@@ -119,7 +119,7 @@ DWORD CopyFileToBuffer(LPCWSTR szFileName, unsigned char** buffer)
 	*buffer = (unsigned char*)VirtualAlloc(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
 	wprintf(L"[*] Copying file \"%s\" to buffer...\n", szFileName);
-	if( FALSE == ReadFile(hfile, *buffer, (DWORD)size, NULL, NULL) )
+	if( FALSE == ReadFile(hfile, *buffer, (DWORD)size, &bytesWritten, NULL) )
 	{
 		printf("[-] Unable to read from file.\n");
 		CloseHandle(hfile);
@@ -142,7 +142,7 @@ DWORD CopyBufferToFile(LPCWSTR szFileName, unsigned char* buffer, int length)
 	}
 
 	wprintf(L"[*] Copying buffer to file ...\n", szFileName);
-	if( FALSE == WriteFile(hfile, buffer, length, NULL, NULL ))
+	if( FALSE == WriteFile(hfile, buffer, length, &bytesWritten, NULL ))
 	{
 		printf("[-] Unable to write to file.\n");
 		CloseHandle(hfile);
@@ -214,7 +214,7 @@ int wmain(int argc, wchar_t *argv[])
 	GetCurrentDirectory(MAX_PATH, keyFileName);
 	wcsncat_s(keyFileName, L"\\key.txt", (MAX_PATH - strlen((const char*)keyFileName)));
 	HANDLE hfile = CreateFile(keyFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-	WriteFile(hfile, encryption_key, strlen((const char*)encryption_key), NULL, NULL);
+	WriteFile(hfile, encryption_key, strlen((const char*)encryption_key), &bytesWritten, NULL);
 	CloseHandle(hfile);
 	wprintf(L"[*] Key written to \"%s\", use that to decrypt if you want...\n", keyFileName);
 
@@ -233,6 +233,6 @@ int wmain(int argc, wchar_t *argv[])
 	CopyBufferToFile(out_filename, big_buffer, filesize + strlen(encryption_key));
 	wprintf(L"[*] Done! now you can use any resource editor to add \"encrypted.rsc\" as a resource\n    to ultimet.exe, Type has to be \"BINARY\" and ID \"101\".n");
 
-	printf("%s\n",encryption_key);
+	printf("\n%s\n",encryption_key);
 	return 0;
 }
