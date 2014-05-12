@@ -75,7 +75,7 @@
       <EntryPointSymbol>WinMain</EntryPointSymbol>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>ws2_32.lib;c:\masm32\lib\msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>c:\masm32\lib\ws2_32.lib;c:\masm32\lib\kernel32.lib;c:\masm32\lib\Shell32.lib;c:\masm32\lib\msvcrt.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>

