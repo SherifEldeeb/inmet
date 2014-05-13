@@ -76,7 +76,7 @@
       <EntryPointSymbol>WinMain</EntryPointSymbol>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>c:\masm32\lib\ws2_32.lib;c:\masm32\lib\kernel32.lib;c:\masm32\lib\Shell32.lib;c:\masm32\lib\msvcrt.lib;c:\masm32\lib\wininet.lib</AdditionalDependencies>
+      <AdditionalDependencies>c:\masm32\lib\ws2_32.lib;c:\masm32\lib\kernel32.lib;c:\masm32\lib\Shell32.lib;c:\masm32\lib\user32.lib;c:\masm32\lib\msvcrt.lib;c:\masm32\lib\wininet.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
