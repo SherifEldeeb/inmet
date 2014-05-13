@@ -13,6 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DA06A931-7DCA-4149-853D-641B8FAA1AB9}</ProjectGuid>
     <RootNamespace>cee</RootNamespace>
+    <ProjectName>TinyMet</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -40,6 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <GenerateManifest>false</GenerateManifest>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -60,7 +62,6 @@
       <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -75,10 +76,12 @@
       <EntryPointSymbol>WinMain</EntryPointSymbol>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>c:\masm32\lib\ws2_32.lib;c:\masm32\lib\kernel32.lib;c:\masm32\lib\Shell32.lib;c:\masm32\lib\msvcrt.lib</AdditionalDependencies>
+      <AdditionalDependencies>c:\masm32\lib\ws2_32.lib;c:\masm32\lib\kernel32.lib;c:\masm32\lib\Shell32.lib;c:\masm32\lib\msvcrt.lib;c:\masm32\lib\wininet.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <ShowProgress>NotSet</ShowProgress>
+      <MergeSections>.rdata=.text</MergeSections>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
