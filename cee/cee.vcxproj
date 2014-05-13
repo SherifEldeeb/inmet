@@ -66,8 +66,9 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AssemblerOutput>AssemblyCode</AssemblerOutput>
+      <AssemblerOutput>All</AssemblerOutput>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -76,14 +77,13 @@
       <EntryPointSymbol>main</EntryPointSymbol>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>c:\masm32\lib\ws2_32.lib;c:\masm32\lib\kernel32.lib;c:\masm32\lib\Shell32.lib;c:\masm32\lib\user32.lib;c:\masm32\lib\msvcrt.lib;c:\masm32\lib\wininet.lib</AdditionalDependencies>
+      <AdditionalDependencies>c:\masm32\lib\ws2_32.lib;c:\masm32\lib\kernel32.lib;c:\masm32\lib\Shell32.lib;c:\masm32\lib\msvcrt.lib;c:\masm32\lib\wininet.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <MinimumRequiredVersion>
       </MinimumRequiredVersion>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <ShowProgress>NotSet</ShowProgress>
       <MergeSections>.rdata=.text</MergeSections>
-      <AdditionalOptions>/align:128 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
