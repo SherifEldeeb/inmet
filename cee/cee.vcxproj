@@ -77,10 +77,9 @@
       <EntryPointSymbol>main</EntryPointSymbol>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>c:\masm32\lib\ws2_32.lib;c:\masm32\lib\kernel32.lib;c:\masm32\lib\Shell32.lib;c:\masm32\lib\msvcrt.lib;c:\masm32\lib\wininet.lib</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;kernel32.lib;Shell32.lib;c:\masm32\lib\msvcrt.lib;wininet.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <MinimumRequiredVersion>
-      </MinimumRequiredVersion>
+      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <ShowProgress>NotSet</ShowProgress>
       <MergeSections>.rdata=.text</MergeSections>
