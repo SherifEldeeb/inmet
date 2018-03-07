@@ -117,7 +117,7 @@ DWORD binstrstr(unsigned char * buff1, int lenbuff1, unsigned char * buff2, int 
 
 	for (int i = 0; i <= (lenbuff1 - lenbuff2); ++ i) 
 	{
-		if (memcmp(buff1 + i, buff2, lenbuff2-1) == 0)
+		if (memcmp(buff1 + i, buff2, lenbuff2) == 0)
 		{
 			return i; 
 		}
@@ -148,7 +148,7 @@ void print_header()
 {
 	printf("\n****************************************************\n");
 	printf("[+] [ultimet] - The Ultimate Meterpreter Executable\n");
-	printf("[+] v0.25.1 - Revolution  \n");
+	printf("[+] v0.3\n");
 	printf("****************************************************\n");
 	printf("  -  http://eldeeb.net - @SheriefEldeeb\n\n");
 }
@@ -219,13 +219,6 @@ void usage()
 		"   it's used inernally, and change connection settings as you like.\n"
 		" - You can use your favourite resource editor to create/edit those resources as\n"
 		"   you please.\n"
-
-		"\nContributors:\n"
-		" - Anwar Mohamed \"@anwarelmakrahy\"\n"
-		"   . Added support for metsvc_bind_tcp & bind_tcp.\n"
-		"   . Added support for run-time parsing and patching of ReflectiveLoader\n"
-		"     Bootstrap.\n"
-
 		);
 };
 
